@@ -167,17 +167,11 @@ export default function DiscoverScreen() {
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const filteredProfiles = useMemo(() => {
-    // Smart distance expansion: first show profiles within selected distance
-    // If not enough, auto-expand to show more from nearby areas
-    const withinRange = DEMO_PROFILES.filter((p) => p.distance <= selectedDistance);
-    if (withinRange.length >= 3) {
-      // Sort by distance (nearest first)
-      return withinRange.sort((a, b) => a.distance - b.distance);
-    }
-    // Auto-expand: show all sorted by distance (nearest first)
-    // This ensures user always sees profiles, expanding outward naturally
-    const sorted = [...DEMO_PROFILES].sort((a, b) => a.distance - b.distance);
-    return sorted;
+    // Always show all profiles sorted by distance (nearest first)
+    // Seamless flow: user scrolls through nearest profiles first,
+    // then automatically sees farther profiles without any interruption
+    // No empty states, no user counts - just a continuous feed
+    return [...DEMO_PROFILES].sort((a, b) => a.distance - b.distance);
   }, [selectedDistance]);
   const position = useRef(new Animated.ValueXY()).current;
   const likeScale = useRef(new Animated.Value(0)).current;
