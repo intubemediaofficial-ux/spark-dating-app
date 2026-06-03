@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
   Modal,
   StatusBar,
 } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 100;
 const CARD_HEIGHT = height - 160;
+const DAILY_LIKE_LIMIT = 20;
 
 const DEMO_PROFILES = [
   {
@@ -88,7 +90,7 @@ const DEMO_USER_PHOTO = 'https://images.unsplash.com/photo-1507003211169-0a1dd72
 const DISTANCE_OPTIONS = [10, 20, 50, 100];
 
 export default function DiscoverScreen() {
-  const [profiles] = useState(DEMO_PROFILES);
+  const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
@@ -96,6 +98,12 @@ export default function DiscoverScreen() {
   const [matchedProfile, setMatchedProfile] = useState(null);
   const [showDistanceFilter, setShowDistanceFilter] = useState(false);
   const [selectedDistance, setSelectedDistance] = useState(50);
+  const [likesUsed, setLikesUsed] = useState(0);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  const filteredProfiles = useMemo(() => {
+    return DEMO_PROFILES.filter((p) => p.distance <= selectedDistance);
+  }, [selectedDistance]);
   const position = useRef(new Animated.ValueXY()).current;
   const likeScale = useRef(new Animated.Value(0)).current;
   const matchScale = useRef(new Animated.Value(0)).current;
@@ -144,10 +152,15 @@ export default function DiscoverScreen() {
   };
 
   const handleSwipe = (direction) => {
-    if (currentIndex >= profiles.length) return;
-    const profile = profiles[currentIndex];
+    if (currentIndex >= filteredProfiles.length) return;
+    const profile = filteredProfiles[currentIndex];
 
     if (direction === 'RIGHT') {
+      if (likesUsed >= DAILY_LIKE_LIMIT) {
+        setShowLimitModal(true);
+        return;
+      }
+      setLikesUsed(likesUsed + 1);
       triggerLikeAnimation(() => {
         if (currentIndex === 0 || currentIndex === 3) {
           setTimeout(() => triggerMatchAnimation(profile), 200);
@@ -253,16 +266,16 @@ export default function DiscoverScreen() {
     );
   };
 
-  if (currentIndex >= profiles.length) {
+  if (currentIndex >= filteredProfiles.length) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" />
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyTitle}>No More Profiles</Text>
-          <Text style={styles.emptyText}>Check back later for new people!</Text>
+          <Text style={styles.emptyTitle}>{t('noMoreProfiles')}</Text>
+          <Text style={styles.emptyText}>{t('checkBackLater')}</Text>
           <TouchableOpacity style={styles.refreshBtn} onPress={() => { setCurrentIndex(0); setCurrentPhotoIndex(0); }}>
-            <Text style={styles.refreshBtnText}>Refresh</Text>
+            <Text style={styles.refreshBtnText}>{t('refresh')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -294,7 +307,7 @@ export default function DiscoverScreen() {
 
       {/* Card Stack */}
       <View style={styles.cardStack}>
-        {profiles.slice(currentIndex, currentIndex + 2).reverse().map((profile, i) =>
+        {filteredProfiles.slice(currentIndex, currentIndex + 2).reverse().map((profile, i) =>
           renderCard(profile, currentIndex + (1 - i))
         )}
       </View>
@@ -361,12 +374,30 @@ export default function DiscoverScreen() {
             </View>
 
             <TouchableOpacity style={styles.matchChatBtn} onPress={() => setShowMatchModal(false)}>
-              <Text style={styles.matchChatBtnText}>Send a Message</Text>
+              <Text style={styles.matchChatBtnText}>{t('sendMessage')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.matchKeepBtn} onPress={() => setShowMatchModal(false)}>
-              <Text style={styles.matchKeepBtnText}>Keep Swiping</Text>
+              <Text style={styles.matchKeepBtnText}>{t('keepSwiping')}</Text>
             </TouchableOpacity>
           </Animated.View>
+        </View>
+      </Modal>
+
+      {/* Like Limit Modal */}
+      <Modal visible={showLimitModal} transparent animationType="slide">
+        <View style={styles.limitOverlay}>
+          <View style={styles.limitContent}>
+            <Text style={styles.limitEmoji}>💔</Text>
+            <Text style={styles.limitTitle}>{t('dailyLimitReached')}</Text>
+            <Text style={styles.limitText}>{t('usedAllLikes', { count: DAILY_LIKE_LIMIT })}</Text>
+            <Text style={styles.limitUpgrade}>{t('upgradeTo')} <Text style={{ color: '#FFB300', fontWeight: '800' }}>Spark Gold</Text> {t('forUnlimited')}</Text>
+            <TouchableOpacity style={styles.limitUpgradeBtn} onPress={() => setShowLimitModal(false)}>
+              <Text style={styles.limitUpgradeBtnText}>{t('upgradeNow')} - ₹199/mo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.limitWaitBtn} onPress={() => setShowLimitModal(false)}>
+              <Text style={styles.limitWaitBtnText}>{t('waitTomorrow')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -440,4 +471,14 @@ const styles = StyleSheet.create({
   matchChatBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   matchKeepBtn: { paddingVertical: 12 },
   matchKeepBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
+  limitOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+  limitContent: { backgroundColor: '#fff', borderRadius: 24, padding: 35, width: '85%', alignItems: 'center' },
+  limitEmoji: { fontSize: 60, marginBottom: 15 },
+  limitTitle: { fontSize: 24, fontWeight: '800', color: '#222', marginBottom: 10, textAlign: 'center' },
+  limitText: { fontSize: 16, color: '#666', marginBottom: 15, textAlign: 'center' },
+  limitUpgrade: { fontSize: 15, color: '#444', marginBottom: 25, textAlign: 'center' },
+  limitUpgradeBtn: { backgroundColor: '#FFB300', paddingVertical: 16, paddingHorizontal: 40, borderRadius: 30, marginBottom: 12, width: '100%', alignItems: 'center' },
+  limitUpgradeBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  limitWaitBtn: { paddingVertical: 12 },
+  limitWaitBtnText: { color: '#888', fontSize: 15 },
 });

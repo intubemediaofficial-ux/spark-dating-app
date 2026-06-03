@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const LOOKING_FOR_OPTIONS = ['Women', 'Men', 'Everyone'];
-const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Punjabi'];
+const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Punjabi', 'Haryanvi'];
 
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const { language: appLanguage, setLanguage: setAppLanguage, t } = useLanguage();
 
   // Discovery
   const [lookingFor, setLookingFor] = useState('Women');
@@ -39,7 +41,6 @@ export default function SettingsScreen({ navigation }) {
 
   // Appearance
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('English');
 
   // Account
   const [phoneNumber, setPhoneNumber] = useState(user.phone || '+91 98765 43211');
@@ -68,13 +69,13 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Discovery Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Discovery Settings</Text>
+          <Text style={styles.sectionTitle}>{t('discoverySettings')}</Text>
 
           {/* Looking For */}
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowLookingForModal(true)}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Looking For</Text>
-              <Text style={styles.settingValue}>{lookingFor}</Text>
+              <Text style={styles.settingLabel}>{t('lookingFor')}</Text>
+              <Text style={styles.settingValue}>{t(lookingFor.toLowerCase())}</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
@@ -82,8 +83,8 @@ export default function SettingsScreen({ navigation }) {
           {/* Age Range */}
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Age Range</Text>
-              <Text style={styles.settingValue}>{minAge} - {maxAge} years</Text>
+              <Text style={styles.settingLabel}>{t('ageRange')}</Text>
+              <Text style={styles.settingValue}>{minAge} - {maxAge} {t('years')}</Text>
             </View>
           </View>
           <View style={styles.sliderRow}>
@@ -118,8 +119,8 @@ export default function SettingsScreen({ navigation }) {
           {/* Maximum Distance */}
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Maximum Distance</Text>
-              <Text style={styles.settingValue}>{maxDistance} km</Text>
+              <Text style={styles.settingLabel}>{t('maximumDistance')}</Text>
+              <Text style={styles.settingValue}>{maxDistance} {t('km')}</Text>
             </View>
           </View>
           <View style={styles.sliderRow}>
@@ -139,7 +140,7 @@ export default function SettingsScreen({ navigation }) {
           {/* Location */}
           <TouchableOpacity style={styles.settingItem} onPress={() => { setTempLocation(location); setShowLocationModal(true); }}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Location</Text>
+              <Text style={styles.settingLabel}>{t('location')}</Text>
               <Text style={styles.settingValue}>📍 {location}</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
@@ -148,8 +149,8 @@ export default function SettingsScreen({ navigation }) {
           {/* Global Mode */}
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Global Mode</Text>
-              <Text style={styles.settingDesc}>Match with people worldwide</Text>
+              <Text style={styles.settingLabel}>{t('globalMode')}</Text>
+              <Text style={styles.settingDesc}>{t('matchWorldwide')}</Text>
             </View>
             <Switch
               value={globalMode}
@@ -162,44 +163,44 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Privacy */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Privacy</Text>
+          <Text style={styles.sectionTitle}>{t('privacy')}</Text>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Show Online Status</Text>
-              <Text style={styles.settingDesc}>Others can see when you're active</Text>
+              <Text style={styles.settingLabel}>{t('showOnlineStatus')}</Text>
+              <Text style={styles.settingDesc}>{t('othersCanSee')}</Text>
             </View>
             <Switch value={showOnline} onValueChange={setShowOnline} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Show Distance</Text>
-              <Text style={styles.settingDesc}>Show how far you are from others</Text>
+              <Text style={styles.settingLabel}>{t('showDistance')}</Text>
+              <Text style={styles.settingDesc}>{t('showHowFar')}</Text>
             </View>
             <Switch value={showDistance} onValueChange={setShowDistance} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Show Age</Text>
-              <Text style={styles.settingDesc}>Display your age on profile</Text>
+              <Text style={styles.settingLabel}>{t('showAge')}</Text>
+              <Text style={styles.settingDesc}>{t('displayAge')}</Text>
             </View>
             <Switch value={showAge} onValueChange={setShowAge} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Hide Profile</Text>
-              <Text style={styles.settingDesc}>Temporarily invisible to others</Text>
+              <Text style={styles.settingLabel}>{t('hideProfile')}</Text>
+              <Text style={styles.settingDesc}>{t('temporarilyInvisible')}</Text>
             </View>
             <Switch value={hideProfile} onValueChange={setHideProfile} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
 
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Blocked Users</Text>
-              <Text style={styles.settingValue}>2 blocked</Text>
+              <Text style={styles.settingLabel}>{t('blockedUsers')}</Text>
+              <Text style={styles.settingValue}>2 {t('blocked')}</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
@@ -207,20 +208,20 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Notifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+          <Text style={styles.sectionTitle}>{t('notifications')}</Text>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Push Notifications</Text>
-              <Text style={styles.settingDesc}>Matches, messages, likes</Text>
+              <Text style={styles.settingLabel}>{t('pushNotifications')}</Text>
+              <Text style={styles.settingDesc}>{t('matchesMessagesLikes')}</Text>
             </View>
             <Switch value={pushNotifications} onValueChange={setPushNotifications} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Email Notifications</Text>
-              <Text style={styles.settingDesc}>Weekly digest & updates</Text>
+              <Text style={styles.settingLabel}>{t('emailNotifications')}</Text>
+              <Text style={styles.settingDesc}>{t('weeklyDigest')}</Text>
             </View>
             <Switch value={emailNotifications} onValueChange={setEmailNotifications} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
@@ -228,20 +229,20 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Appearance */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
+          <Text style={styles.sectionTitle}>{t('appearance')}</Text>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Dark Mode</Text>
-              <Text style={styles.settingDesc}>Use dark theme</Text>
+              <Text style={styles.settingLabel}>{t('darkMode')}</Text>
+              <Text style={styles.settingDesc}>{t('useDarkTheme')}</Text>
             </View>
             <Switch value={darkMode} onValueChange={setDarkMode} trackColor={{ true: '#FF4458', false: '#ddd' }} thumbColor="#fff" />
           </View>
 
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowLanguageModal(true)}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingLabel}>Language</Text>
-              <Text style={styles.settingValue}>{language}</Text>
+              <Text style={styles.settingLabel}>{t('language')}</Text>
+              <Text style={styles.settingValue}>{appLanguage}</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
@@ -376,19 +377,19 @@ export default function SettingsScreen({ navigation }) {
       <Modal visible={showLanguageModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Language</Text>
+            <Text style={styles.modalTitle}>{t('language')}</Text>
             {LANGUAGE_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option}
-                style={[styles.modalOption, language === option && styles.modalOptionActive]}
-                onPress={() => { setLanguage(option); setShowLanguageModal(false); }}
+                style={[styles.modalOption, appLanguage === option && styles.modalOptionActive]}
+                onPress={() => { setAppLanguage(option); setShowLanguageModal(false); }}
               >
-                <Text style={[styles.modalOptionText, language === option && styles.modalOptionTextActive]}>{option}</Text>
-                {language === option && <Text style={styles.checkmark}>✓</Text>}
+                <Text style={[styles.modalOptionText, appLanguage === option && styles.modalOptionTextActive]}>{option}</Text>
+                {appLanguage === option && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowLanguageModal(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
+              <Text style={styles.modalCancelText}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
