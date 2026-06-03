@@ -196,6 +196,45 @@ export default function SettingsScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* Boost */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Boost Your Profile</Text>
+
+          <TouchableOpacity
+            style={styles.boostCard}
+            onPress={() => Alert.alert('🚀 Boost Activated!', 'Your profile is now visible to more people nearby for 30 minutes! Active profiles in your area will see you first.')}
+          >
+            <View style={styles.boostCardLeft}>
+              <Text style={styles.boostIcon}>🚀</Text>
+              <View>
+                <Text style={styles.boostTitle}>Activate Boost</Text>
+                <Text style={styles.boostDesc}>Be seen by 10x more people for 30 minutes</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.boostFeatures}>
+            <View style={styles.boostFeatureItem}>
+              <Text style={styles.boostFeatureIcon}>📍</Text>
+              <Text style={styles.boostFeatureText}>See active profiles nearby</Text>
+            </View>
+            <View style={styles.boostFeatureItem}>
+              <Text style={styles.boostFeatureIcon}>❤️</Text>
+              <Text style={styles.boostFeatureText}>Send direct likes to active users</Text>
+            </View>
+            <View style={styles.boostFeatureItem}>
+              <Text style={styles.boostFeatureIcon}>👀</Text>
+              <Text style={styles.boostFeatureText}>Your profile appears first in their feed</Text>
+            </View>
+            <View style={styles.boostFeatureItem}>
+              <Text style={styles.boostFeatureIcon}>⏰</Text>
+              <Text style={styles.boostFeatureText}>30 minutes of priority visibility</Text>
+            </View>
+          </View>
+
+          <Text style={styles.boostNote}>1 free Boost per month. Extra Boosts available with Spark Gold.</Text>
+        </View>
+
         {/* Safety */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Safety & Support</Text>
@@ -316,4 +355,14 @@ const styles = StyleSheet.create({
   deleteItem: { paddingVertical: 18, alignItems: 'center' },
   deleteText: { fontSize: 18, color: '#999' },
   version: { fontSize: 14, color: '#ccc', textAlign: 'center', marginTop: 20, paddingBottom: 10 },
+  boostCard: { backgroundColor: '#F3E5F5', borderRadius: 16, padding: 18, marginTop: 10, borderWidth: 1, borderColor: '#CE93D8' },
+  boostCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  boostIcon: { fontSize: 32 },
+  boostTitle: { fontSize: 18, fontWeight: '700', color: '#6A1B9A' },
+  boostDesc: { fontSize: 14, color: '#7B1FA2', marginTop: 3 },
+  boostFeatures: { marginTop: 15, gap: 10 },
+  boostFeatureItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  boostFeatureIcon: { fontSize: 18 },
+  boostFeatureText: { fontSize: 15, color: '#444' },
+  boostNote: { fontSize: 13, color: '#999', marginTop: 12, fontStyle: 'italic', paddingBottom: 15 },
 });

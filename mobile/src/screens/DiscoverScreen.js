@@ -8,7 +8,7 @@ import {
   PanResponder,
   Dimensions,
   TouchableOpacity,
-  ScrollView,
+  Modal,
   Alert,
   StatusBar,
 } from 'react-native';
@@ -27,6 +27,7 @@ const DEMO_PROFILES = [
       'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
       'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
       'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&h=1200&fit=crop',
     ],
     interests: ['Travel', 'Photography', 'Coffee', 'Dogs', 'Music', 'Yoga'],
     city: 'New Delhi',
@@ -62,6 +63,7 @@ const DEMO_PROFILES = [
       'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
       'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
       'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
     ],
     interests: ['Medical', 'Cooking', 'Bollywood', 'Reading', 'Gym', 'Swimming'],
     city: 'Mumbai',
@@ -79,6 +81,7 @@ const DEMO_PROFILES = [
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1200&fit=crop',
       'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
       'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
     ],
     interests: ['Poetry', 'Business', 'Music', 'Writing', 'Chai', 'Books'],
     city: 'Hyderabad',
@@ -107,24 +110,76 @@ const DEMO_PROFILES = [
   },
 ];
 
+const DEMO_USER_PHOTO = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+
 export default function DiscoverScreen() {
   const [profiles] = useState(DEMO_PROFILES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchedProfile, setMatchedProfile] = useState(null);
   const position = useRef(new Animated.ValueXY()).current;
+  const likeScale = useRef(new Animated.Value(0)).current;
+  const matchScale = useRef(new Animated.Value(0)).current;
+  const leftProfileX = useRef(new Animated.Value(-width)).current;
+  const rightProfileX = useRef(new Animated.Value(width)).current;
+  const heartScale = useRef(new Animated.Value(0)).current;
+  const sparkOpacity = useRef(new Animated.Value(0)).current;
+
+  const triggerLikeAnimation = (callback) => {
+    setShowLikeAnimation(true);
+    likeScale.setValue(0);
+    Animated.sequence([
+      Animated.spring(likeScale, { toValue: 1.2, friction: 3, useNativeDriver: true }),
+      Animated.spring(likeScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+      Animated.timing(likeScale, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => {
+      setShowLikeAnimation(false);
+      if (callback) callback();
+    });
+  };
+
+  const triggerMatchAnimation = (profile) => {
+    setMatchedProfile(profile);
+    setShowMatchModal(true);
+    leftProfileX.setValue(-width);
+    rightProfileX.setValue(width);
+    heartScale.setValue(0);
+    sparkOpacity.setValue(0);
+    matchScale.setValue(0);
+
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(leftProfileX, { toValue: -60, friction: 5, useNativeDriver: true }),
+        Animated.spring(rightProfileX, { toValue: 60, friction: 5, useNativeDriver: true }),
+        Animated.spring(matchScale, { toValue: 1, friction: 4, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.spring(leftProfileX, { toValue: -30, friction: 8, useNativeDriver: true }),
+        Animated.spring(rightProfileX, { toValue: 30, friction: 8, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.spring(heartScale, { toValue: 1, friction: 3, tension: 100, useNativeDriver: true }),
+        Animated.timing(sparkOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]),
+    ]).start();
+  };
 
   const handleSwipe = (direction) => {
     if (currentIndex >= profiles.length) return;
     const profile = profiles[currentIndex];
 
-    if (direction === 'RIGHT' && (currentIndex === 0 || currentIndex === 3)) {
-      setTimeout(() => {
-        Alert.alert('🎉 It\'s a Match!', `You and ${profile.name} liked each other!\nStart chatting now.`);
-      }, 400);
+    if (direction === 'RIGHT') {
+      triggerLikeAnimation(() => {
+        if (currentIndex === 0 || currentIndex === 3) {
+          setTimeout(() => triggerMatchAnimation(profile), 200);
+        }
+      });
     }
 
     if (direction === 'SUPERLIKE') {
-      Alert.alert('⭐ Super Like Sent!', `${profile.name} will see your Super Like first!`);
+      triggerLikeAnimation();
     }
 
     setCurrentIndex(currentIndex + 1);
@@ -193,10 +248,7 @@ export default function DiscoverScreen() {
   const renderPhotoIndicators = (photos) => (
     <View style={styles.photoIndicators}>
       {photos.map((_, i) => (
-        <View
-          key={i}
-          style={[styles.indicator, i === currentPhotoIndex && styles.activeIndicator]}
-        />
+        <View key={i} style={[styles.indicator, i === currentPhotoIndex && styles.activeIndicator]} />
       ))}
     </View>
   );
@@ -212,63 +264,26 @@ export default function DiscoverScreen() {
 
   const renderCard = (profile, index) => {
     if (index < currentIndex) return null;
-
     const isCurrentCard = index === currentIndex;
     const cardStyle = isCurrentCard
-      ? [
-          styles.card,
-          {
-            transform: [
-              { translateX: position.x },
-              { translateY: position.y },
-              { rotate },
-            ],
-          },
-        ]
-      : [
-          styles.card,
-          {
-            top: 8,
-            transform: [{ scale: nextCardScale }],
-            opacity: 0.9,
-          },
-        ];
+      ? [styles.card, { transform: [{ translateX: position.x }, { translateY: position.y }, { rotate }] }]
+      : [styles.card, { top: 8, transform: [{ scale: nextCardScale }], opacity: 0.9 }];
 
     const photoToShow = isCurrentCard ? currentPhotoIndex : 0;
 
     return (
-      <Animated.View
-        key={profile.id}
-        style={cardStyle}
-        {...(isCurrentCard ? panResponder.panHandlers : {})}
-      >
-        {/* Photo */}
-        <Image
-          source={{ uri: profile.photos[photoToShow] }}
-          style={styles.cardImage}
-          resizeMode="cover"
-        />
+      <Animated.View key={profile.id} style={cardStyle} {...(isCurrentCard ? panResponder.panHandlers : {})}>
+        <Image source={{ uri: profile.photos[photoToShow] }} style={styles.cardImage} resizeMode="cover" />
 
-        {/* Photo tap zones */}
         {isCurrentCard && (
           <View style={styles.tapZones}>
-            <TouchableOpacity
-              style={styles.tapLeft}
-              onPress={() => handlePhotoTap(profile, 'left')}
-              activeOpacity={1}
-            />
-            <TouchableOpacity
-              style={styles.tapRight}
-              onPress={() => handlePhotoTap(profile, 'right')}
-              activeOpacity={1}
-            />
+            <TouchableOpacity style={styles.tapLeft} onPress={() => handlePhotoTap(profile, 'left')} activeOpacity={1} />
+            <TouchableOpacity style={styles.tapRight} onPress={() => handlePhotoTap(profile, 'right')} activeOpacity={1} />
           </View>
         )}
 
-        {/* Photo indicators */}
         {isCurrentCard && renderPhotoIndicators(profile.photos)}
 
-        {/* Like/Nope stamps */}
         {isCurrentCard && (
           <>
             <Animated.View style={[styles.stamp, styles.likeStamp, { opacity: likeOpacity }]}>
@@ -280,42 +295,33 @@ export default function DiscoverScreen() {
           </>
         )}
 
-        {/* Gradient overlay */}
         <View style={styles.gradient} />
 
-        {/* Profile info overlay */}
         <View style={styles.profileInfo}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{profile.name}</Text>
             <Text style={styles.age}>{profile.age}</Text>
             {profile.isVerified && (
-              <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedIcon}>✓</Text>
-              </View>
+              <View style={styles.verifiedBadge}><Text style={styles.verifiedIcon}>✓</Text></View>
             )}
           </View>
-
           {profile.job && (
             <View style={styles.infoRow}>
               <Text style={styles.infoIcon}>💼</Text>
               <Text style={styles.infoText}>{profile.job}</Text>
             </View>
           )}
-
           {profile.education && (
             <View style={styles.infoRow}>
               <Text style={styles.infoIcon}>🎓</Text>
               <Text style={styles.infoText}>{profile.education}</Text>
             </View>
           )}
-
           <View style={styles.infoRow}>
             <Text style={styles.infoIcon}>📍</Text>
             <Text style={styles.infoText}>{profile.city} • {profile.distance} km away</Text>
           </View>
-
           <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
-
           <View style={styles.interestRow}>
             {profile.interests.slice(0, 5).map((interest, i) => (
               <View key={i} style={styles.interestTag}>
@@ -334,9 +340,6 @@ export default function DiscoverScreen() {
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Text style={styles.logo}>🔥 Spark</Text>
-          <TouchableOpacity style={styles.filterBtn}>
-            <Text style={styles.filterIcon}>⚙️</Text>
-          </TouchableOpacity>
         </View>
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
@@ -354,7 +357,6 @@ export default function DiscoverScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logo}>🔥 Spark</Text>
         <TouchableOpacity style={styles.filterBtn}>
@@ -362,7 +364,6 @@ export default function DiscoverScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Card Stack */}
       <View style={styles.cardStack}>
         {profiles.slice(currentIndex, currentIndex + 2).reverse().map((profile, i) =>
           renderCard(profile, currentIndex + (1 - i))
@@ -371,113 +372,108 @@ export default function DiscoverScreen() {
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.rewindBtn]}
-          onPress={() => {
-            if (currentIndex > 0) {
-              setCurrentIndex(currentIndex - 1);
-              setCurrentPhotoIndex(0);
-            }
-          }}
-        >
+        <TouchableOpacity style={[styles.actionBtn, styles.rewindBtn]} onPress={() => { if (currentIndex > 0) { setCurrentIndex(currentIndex - 1); setCurrentPhotoIndex(0); } }}>
           <Text style={styles.actionIcon}>↩️</Text>
           <Text style={styles.actionLabel}>Rewind</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.nopeBtn]}
-          onPress={() => {
-            Animated.timing(position, {
-              toValue: { x: -width - 100, y: 0 },
-              duration: 300,
-              useNativeDriver: false,
-            }).start(() => {
-              handleSwipe('LEFT');
-              position.setValue({ x: 0, y: 0 });
-            });
-          }}
-        >
+        <TouchableOpacity style={[styles.actionBtn, styles.nopeBtn]} onPress={() => {
+          Animated.timing(position, { toValue: { x: -width - 100, y: 0 }, duration: 300, useNativeDriver: false }).start(() => { handleSwipe('LEFT'); position.setValue({ x: 0, y: 0 }); });
+        }}>
           <Text style={[styles.actionIcon, { fontSize: 32 }]}>✕</Text>
           <Text style={styles.actionLabel}>Nope</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.superLikeBtn]}
-          onPress={() => {
-            Animated.timing(position, {
-              toValue: { x: 0, y: -height },
-              duration: 300,
-              useNativeDriver: false,
-            }).start(() => {
-              handleSwipe('SUPERLIKE');
-              position.setValue({ x: 0, y: 0 });
-            });
-          }}
-        >
+        <TouchableOpacity style={[styles.actionBtn, styles.superLikeBtn]} onPress={() => {
+          Animated.timing(position, { toValue: { x: 0, y: -height }, duration: 300, useNativeDriver: false }).start(() => { handleSwipe('SUPERLIKE'); position.setValue({ x: 0, y: 0 }); });
+        }}>
           <Text style={[styles.actionIcon, { fontSize: 28 }]}>⭐</Text>
           <Text style={styles.actionLabel}>Super</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.likeActionBtn]}
-          onPress={() => {
-            Animated.timing(position, {
-              toValue: { x: width + 100, y: 0 },
-              duration: 300,
-              useNativeDriver: false,
-            }).start(() => {
-              handleSwipe('RIGHT');
-              position.setValue({ x: 0, y: 0 });
-            });
-          }}
-        >
+        <TouchableOpacity style={[styles.actionBtn, styles.likeActionBtn]} onPress={() => {
+          Animated.timing(position, { toValue: { x: width + 100, y: 0 }, duration: 300, useNativeDriver: false }).start(() => { handleSwipe('RIGHT'); position.setValue({ x: 0, y: 0 }); });
+        }}>
           <Text style={[styles.actionIcon, { fontSize: 32 }]}>♥</Text>
           <Text style={styles.actionLabel}>Like</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.boostBtn]}
-          onPress={() => Alert.alert('🚀 Boost Activated!', 'Your profile will be shown to more people for 30 minutes!')}
-        >
+        <TouchableOpacity style={[styles.actionBtn, styles.boostBtn]} onPress={() => Alert.alert('🚀 Boost Activated!', 'Your profile will be shown to more people for 30 minutes!')}>
           <Text style={styles.actionIcon}>⚡</Text>
           <Text style={styles.actionLabel}>Boost</Text>
         </TouchableOpacity>
       </View>
+
+      {/* LIKE ANIMATION - Full screen heart */}
+      {showLikeAnimation && (
+        <View style={styles.likeAnimationOverlay} pointerEvents="none">
+          <Animated.View style={[styles.likeAnimationHeart, { transform: [{ scale: likeScale }] }]}>
+            <Text style={styles.likeAnimationIcon}>❤️</Text>
+          </Animated.View>
+        </View>
+      )}
+
+      {/* MATCH MODAL - Profiles collide animation */}
+      <Modal visible={showMatchModal} transparent animationType="fade">
+        <View style={styles.matchOverlay}>
+          <Animated.View style={[styles.matchContent, { transform: [{ scale: matchScale }] }]}>
+            {/* Spark/Lightning effect */}
+            <Animated.View style={[styles.sparkContainer, { opacity: sparkOpacity }]}>
+              <Text style={styles.sparkText}>⚡</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', top: -20, left: -30 }]}>✨</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', top: -15, right: -25 }]}>✨</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', bottom: -10, left: -20 }]}>💫</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', bottom: -15, right: -30 }]}>💫</Text>
+            </Animated.View>
+
+            <Text style={styles.matchTitle}>It's a Match! 🎉</Text>
+            <Text style={styles.matchSubtitle}>You and {matchedProfile?.name} liked each other</Text>
+
+            {/* Two profiles colliding */}
+            <View style={styles.matchProfiles}>
+              <Animated.View style={[styles.matchProfileLeft, { transform: [{ translateX: leftProfileX }] }]}>
+                <Image source={{ uri: DEMO_USER_PHOTO }} style={styles.matchProfileImage} />
+                <Text style={styles.matchProfileName}>You</Text>
+              </Animated.View>
+
+              {/* Heart in center */}
+              <Animated.View style={[styles.matchHeart, { transform: [{ scale: heartScale }] }]}>
+                <Text style={styles.matchHeartIcon}>❤️</Text>
+              </Animated.View>
+
+              <Animated.View style={[styles.matchProfileRight, { transform: [{ translateX: rightProfileX }] }]}>
+                <Image source={{ uri: matchedProfile?.photos?.[0] }} style={styles.matchProfileImage} />
+                <Text style={styles.matchProfileName}>{matchedProfile?.name}</Text>
+              </Animated.View>
+            </View>
+
+            <TouchableOpacity style={styles.matchChatBtn} onPress={() => setShowMatchModal(false)}>
+              <Text style={styles.matchChatBtnText}>Send a Message</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.matchKeepBtn} onPress={() => setShowMatchModal(false)}>
+              <Text style={styles.matchKeepBtnText}>Keep Swiping</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8' },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10,
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10 },
   logo: { fontSize: 28, fontWeight: '800', color: '#FF4458' },
   filterBtn: { padding: 8 },
   filterIcon: { fontSize: 22 },
   cardStack: { flex: 1, alignItems: 'center', justifyContent: 'center', marginHorizontal: 10 },
-  card: {
-    position: 'absolute',
-    width: width - 20,
-    height: CARD_HEIGHT,
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: 'hidden',
-  },
+  card: { position: 'absolute', width: width - 20, height: CARD_HEIGHT, borderRadius: 16, backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8, overflow: 'hidden' },
   cardImage: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 },
   tapZones: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', zIndex: 10 },
   tapLeft: { flex: 1 },
   tapRight: { flex: 1 },
-  photoIndicators: {
-    position: 'absolute', top: 12, left: 10, right: 10,
-    flexDirection: 'row', gap: 4, zIndex: 20,
-  },
+  photoIndicators: { position: 'absolute', top: 12, left: 10, right: 10, flexDirection: 'row', gap: 4, zIndex: 20 },
   indicator: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.4)' },
   activeIndicator: { backgroundColor: '#fff' },
   stamp: { position: 'absolute', top: 80, zIndex: 30, borderWidth: 4, borderRadius: 8, padding: 10 },
@@ -485,11 +481,7 @@ const styles = StyleSheet.create({
   likeStampText: { fontSize: 36, fontWeight: '900', color: '#4CAF50' },
   nopeStamp: { right: 20, borderColor: '#FF4458', transform: [{ rotate: '15deg' }] },
   nopeStampText: { fontSize: 36, fontWeight: '900', color: '#FF4458' },
-  gradient: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
-    backgroundColor: 'transparent',
-    backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-  },
+  gradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', backgroundColor: 'transparent', backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.8))' },
   profileInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 5 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   name: { fontSize: 28, fontWeight: '800', color: '#fff' },
@@ -518,4 +510,28 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 16, color: '#666', marginTop: 10, textAlign: 'center', lineHeight: 24 },
   refreshBtn: { backgroundColor: '#FF4458', paddingHorizontal: 35, paddingVertical: 14, borderRadius: 30, marginTop: 25 },
   refreshBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+
+  // Like Animation
+  likeAnimationOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 999 },
+  likeAnimationHeart: { alignItems: 'center', justifyContent: 'center' },
+  likeAnimationIcon: { fontSize: 120 },
+
+  // Match Modal
+  matchOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
+  matchContent: { alignItems: 'center', padding: 30, width: '90%' },
+  sparkContainer: { position: 'absolute', top: '35%', zIndex: 10 },
+  sparkText: { fontSize: 40 },
+  matchTitle: { fontSize: 34, fontWeight: '900', color: '#fff', marginBottom: 8 },
+  matchSubtitle: { fontSize: 17, color: 'rgba(255,255,255,0.8)', marginBottom: 40 },
+  matchProfiles: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 50, width: '100%' },
+  matchProfileLeft: { alignItems: 'center' },
+  matchProfileRight: { alignItems: 'center' },
+  matchProfileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#FF4458', backgroundColor: '#333' },
+  matchProfileName: { fontSize: 16, color: '#fff', fontWeight: '600', marginTop: 10 },
+  matchHeart: { position: 'absolute', zIndex: 10 },
+  matchHeartIcon: { fontSize: 50 },
+  matchChatBtn: { backgroundColor: '#FF4458', paddingHorizontal: 50, paddingVertical: 16, borderRadius: 30, marginBottom: 15, width: '100%', alignItems: 'center' },
+  matchChatBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  matchKeepBtn: { paddingVertical: 12 },
+  matchKeepBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
 });

@@ -72,26 +72,35 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.premiumArrow}>→</Text>
         </TouchableOpacity>
 
-        {/* Photos Grid */}
+        {/* Photos Grid - 6 slots */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Photos</Text>
-            <TouchableOpacity>
-              <Text style={styles.editLink}>Edit</Text>
-            </TouchableOpacity>
+            <Text style={styles.photoCount}>{(user.photos || []).length}/6</Text>
           </View>
           <View style={styles.photosGrid}>
-            {(user.photos || [
-              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300',
-              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300',
-            ]).map((photo, i) => (
-              <Image key={i} source={{ uri: photo }} style={styles.gridPhoto} />
-            ))}
-            <TouchableOpacity style={styles.addPhotoBtn}>
-              <Text style={styles.addPhotoIcon}>+</Text>
-              <Text style={styles.addPhotoText}>Add Photo</Text>
-            </TouchableOpacity>
+            {Array.from({ length: 6 }).map((_, i) => {
+              const photos = user.photos || [
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300',
+                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300',
+              ];
+              if (i < photos.length) {
+                return (
+                  <View key={i} style={styles.gridPhotoContainer}>
+                    <Image source={{ uri: photos[i] }} style={styles.gridPhoto} />
+                    {i === 0 && <View style={styles.mainPhotoBadge}><Text style={styles.mainPhotoText}>Main</Text></View>}
+                  </View>
+                );
+              }
+              return (
+                <TouchableOpacity key={i} style={styles.addPhotoBtn}>
+                  <Text style={styles.addPhotoIcon}>+</Text>
+                  <Text style={styles.addPhotoText}>Add</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+          <Text style={styles.photoHint}>Add up to 6 photos. First photo is your main profile pic.</Text>
         </View>
 
         {/* Bio */}
@@ -174,11 +183,16 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 20, fontWeight: '700', color: '#222' },
   editLink: { fontSize: 15, color: '#FF4458', fontWeight: '600' },
+  photoCount: { fontSize: 14, color: '#999', fontWeight: '500' },
   photosGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  gridPhotoContainer: { position: 'relative' },
   gridPhoto: { width: (width - 60) / 3, height: (width - 60) / 3, borderRadius: 12, backgroundColor: '#e0e0e0' },
+  mainPhotoBadge: { position: 'absolute', bottom: 6, left: 6, backgroundColor: '#FF4458', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  mainPhotoText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   addPhotoBtn: { width: (width - 60) / 3, height: (width - 60) / 3, borderRadius: 12, backgroundColor: '#f5f5f5', borderWidth: 2, borderColor: '#ddd', borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
   addPhotoIcon: { fontSize: 30, color: '#999' },
   addPhotoText: { fontSize: 12, color: '#999', marginTop: 4 },
+  photoHint: { fontSize: 13, color: '#999', marginTop: 10, fontStyle: 'italic' },
   bioText: { fontSize: 16, color: '#444', lineHeight: 24 },
   interestsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   interestChip: { backgroundColor: '#FFF0F1', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#FFCDD2' },
