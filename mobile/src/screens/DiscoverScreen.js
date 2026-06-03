@@ -84,6 +84,71 @@ const DEMO_PROFILES = [
     city: 'Bangalore', distance: 15, isVerified: true,
     job: 'SDE at Microsoft',
   },
+  {
+    id: '6', name: 'Riya Singh', age: 23,
+    bio: 'Fashion blogger | Foodie | Yoga lover 🧘‍♀️',
+    photos: [
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Fashion', 'Food', 'Yoga', 'Travel'],
+    city: 'Jaipur', distance: 35, isVerified: true,
+    job: 'Fashion Blogger',
+  },
+  {
+    id: '7', name: 'Pooja Verma', age: 24,
+    bio: 'Teacher by heart | Music is life 🎵',
+    photos: [
+      'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Teaching', 'Music', 'Reading', 'Cooking'],
+    city: 'Lucknow', distance: 55, isVerified: false,
+    job: 'School Teacher',
+  },
+  {
+    id: '8', name: 'Nisha Kapoor', age: 27,
+    bio: 'CA aspirant | Gym freak 💪 | Adventure junkie',
+    photos: [
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Finance', 'Gym', 'Adventure', 'Movies'],
+    city: 'Chandigarh', distance: 80, isVerified: true,
+    job: 'CA Intern at Deloitte',
+  },
+  {
+    id: '9', name: 'Aditi Sharma', age: 21,
+    bio: 'College student | Photography is my escape 📸',
+    photos: [
+      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Photography', 'College', 'Shopping', 'Dance'],
+    city: 'Pune', distance: 45, isVerified: true,
+    job: 'BBA Student at Symbiosis',
+  },
+  {
+    id: '10', name: 'Simran Kaur', age: 25,
+    bio: 'Nurse | Punjabi kudi | Love dogs 🐶',
+    photos: [
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Healthcare', 'Dogs', 'Cooking', 'Bhangra'],
+    city: 'Amritsar', distance: 95, isVerified: true,
+    job: 'Nurse at Fortis Hospital',
+  },
 ];
 
 const DEMO_USER_PHOTO = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
@@ -102,7 +167,11 @@ export default function DiscoverScreen() {
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const filteredProfiles = useMemo(() => {
-    return DEMO_PROFILES.filter((p) => p.distance <= selectedDistance);
+    // Always show all profiles sorted by distance (nearest first)
+    // Seamless flow: user scrolls through nearest profiles first,
+    // then automatically sees farther profiles without any interruption
+    // No empty states, no user counts - just a continuous feed
+    return [...DEMO_PROFILES].sort((a, b) => a.distance - b.distance);
   }, [selectedDistance]);
   const position = useRef(new Animated.ValueXY()).current;
   const likeScale = useRef(new Animated.Value(0)).current;
