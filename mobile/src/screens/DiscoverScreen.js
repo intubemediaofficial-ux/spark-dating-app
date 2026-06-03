@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,87 +8,158 @@ import {
   PanResponder,
   Dimensions,
   TouchableOpacity,
-  ActivityIndicator,
+  ScrollView,
   Alert,
+  StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { swipeAPI } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
-const SWIPE_THRESHOLD = 120;
+const SWIPE_THRESHOLD = 100;
+const CARD_HEIGHT = height - 180;
+
+const DEMO_PROFILES = [
+  {
+    id: '1',
+    name: 'Priya Sharma',
+    age: 24,
+    bio: 'Coffee lover | Travel enthusiast | Dog person 🐕\nLooking for someone who can make me laugh and go on spontaneous adventures.',
+    photos: [
+      'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Travel', 'Photography', 'Coffee', 'Dogs', 'Music', 'Yoga'],
+    city: 'New Delhi',
+    distance: 3,
+    isVerified: true,
+    job: 'Marketing Manager at Google',
+    education: 'Delhi University',
+  },
+  {
+    id: '2',
+    name: 'Ananya Gupta',
+    age: 23,
+    bio: 'Graphic designer by day, dancer by night 💃\nSwipe right if you love art and good conversations.',
+    photos: [
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Art', 'Dance', 'Design', 'Netflix', 'Wine', 'Travel'],
+    city: 'New Delhi',
+    distance: 5,
+    isVerified: true,
+    job: 'Senior Designer at Zomato',
+    education: 'NID Ahmedabad',
+  },
+  {
+    id: '3',
+    name: 'Sneha Patel',
+    age: 25,
+    bio: 'Doctor in making 🩺 | Love cooking | Bollywood movie buff\nIf you can quote Shah Rukh Khan dialogues, we are a match!',
+    photos: [
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Medical', 'Cooking', 'Bollywood', 'Reading', 'Gym', 'Swimming'],
+    city: 'Mumbai',
+    distance: 12,
+    isVerified: false,
+    job: 'Resident Doctor at AIIMS',
+    education: 'AIIMS Delhi',
+  },
+  {
+    id: '4',
+    name: 'Kavya Reddy',
+    age: 22,
+    bio: 'MBA student | Poetry writer ✍️ | Old Bollywood songs lover\nLet\'s discuss life over chai and samosas.',
+    photos: [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Poetry', 'Business', 'Music', 'Writing', 'Chai', 'Books'],
+    city: 'Hyderabad',
+    distance: 8,
+    isVerified: true,
+    job: 'MBA Student at ISB',
+    education: 'ISB Hyderabad',
+  },
+  {
+    id: '5',
+    name: 'Meera Joshi',
+    age: 26,
+    bio: 'Software engineer | Cat mom 🐱 | Weekend trekker 🏔️\nI write code all week and climb mountains on weekends.',
+    photos: [
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Coding', 'Cats', 'Trekking', 'Photography', 'Gaming', 'Coffee'],
+    city: 'Bangalore',
+    distance: 15,
+    isVerified: true,
+    job: 'SDE at Microsoft',
+    education: 'IIT Bombay',
+  },
+];
 
 export default function DiscoverScreen() {
-  const [profiles, setProfiles] = useState([]);
+  const [profiles] = useState(DEMO_PROFILES);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const position = useRef(new Animated.ValueXY()).current;
 
-  useEffect(() => {
-    loadProfiles();
-  }, []);
-
-  const loadProfiles = async () => {
-    try {
-      setLoading(true);
-      const response = await swipeAPI.getDiscovery();
-      setProfiles(response.data.profiles);
-    } catch (error) {
-      console.error('Load profiles error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSwipe = async (direction) => {
+  const handleSwipe = (direction) => {
     if (currentIndex >= profiles.length) return;
-
     const profile = profiles[currentIndex];
-    try {
-      const response = await swipeAPI.swipe(profile.id, direction);
-      if (response.data.isMatch) {
-        Alert.alert('🎉 It\'s a Match!', `You and ${profile.name} liked each other!`);
-      }
-    } catch (error) {
-      console.error('Swipe error:', error);
+
+    if (direction === 'RIGHT' && (currentIndex === 0 || currentIndex === 3)) {
+      setTimeout(() => {
+        Alert.alert('🎉 It\'s a Match!', `You and ${profile.name} liked each other!\nStart chatting now.`);
+      }, 400);
+    }
+
+    if (direction === 'SUPERLIKE') {
+      Alert.alert('⭐ Super Like Sent!', `${profile.name} will see your Super Like first!`);
     }
 
     setCurrentIndex(currentIndex + 1);
-
-    // Load more when running low
-    if (currentIndex >= profiles.length - 3) {
-      loadProfiles();
-    }
+    setCurrentPhotoIndex(0);
   };
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 10,
     onPanResponderMove: (_, gesture) => {
       position.setValue({ x: gesture.dx, y: gesture.dy });
     },
     onPanResponderRelease: (_, gesture) => {
       if (gesture.dx > SWIPE_THRESHOLD) {
-        // Swipe Right - Like
-        Animated.spring(position, {
+        Animated.timing(position, {
           toValue: { x: width + 100, y: gesture.dy },
+          duration: 300,
           useNativeDriver: false,
         }).start(() => {
           handleSwipe('RIGHT');
           position.setValue({ x: 0, y: 0 });
         });
       } else if (gesture.dx < -SWIPE_THRESHOLD) {
-        // Swipe Left - Skip
-        Animated.spring(position, {
+        Animated.timing(position, {
           toValue: { x: -width - 100, y: gesture.dy },
+          duration: 300,
           useNativeDriver: false,
         }).start(() => {
           handleSwipe('LEFT');
           position.setValue({ x: 0, y: 0 });
         });
       } else {
-        // Return to center
         Animated.spring(position, {
           toValue: { x: 0, y: 0 },
+          friction: 5,
           useNativeDriver: false,
         }).start();
       }
@@ -97,21 +168,47 @@ export default function DiscoverScreen() {
 
   const rotate = position.x.interpolate({
     inputRange: [-width / 2, 0, width / 2],
-    outputRange: ['-10deg', '0deg', '10deg'],
+    outputRange: ['-8deg', '0deg', '8deg'],
     extrapolate: 'clamp',
   });
 
   const likeOpacity = position.x.interpolate({
-    inputRange: [0, width / 4],
+    inputRange: [0, width / 5],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
 
   const nopeOpacity = position.x.interpolate({
-    inputRange: [-width / 4, 0],
+    inputRange: [-width / 5, 0],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
+
+  const nextCardScale = position.x.interpolate({
+    inputRange: [-width / 2, 0, width / 2],
+    outputRange: [1, 0.95, 1],
+    extrapolate: 'clamp',
+  });
+
+  const renderPhotoIndicators = (photos) => (
+    <View style={styles.photoIndicators}>
+      {photos.map((_, i) => (
+        <View
+          key={i}
+          style={[styles.indicator, i === currentPhotoIndex && styles.activeIndicator]}
+        />
+      ))}
+    </View>
+  );
+
+  const handlePhotoTap = (profile, side) => {
+    const totalPhotos = profile.photos.length;
+    if (side === 'right' && currentPhotoIndex < totalPhotos - 1) {
+      setCurrentPhotoIndex(currentPhotoIndex + 1);
+    } else if (side === 'left' && currentPhotoIndex > 0) {
+      setCurrentPhotoIndex(currentPhotoIndex - 1);
+    }
+  };
 
   const renderCard = (profile, index) => {
     if (index < currentIndex) return null;
@@ -128,7 +225,16 @@ export default function DiscoverScreen() {
             ],
           },
         ]
-      : [styles.card, { top: 10 * (index - currentIndex), transform: [{ scale: 1 - 0.05 * (index - currentIndex) }] }];
+      : [
+          styles.card,
+          {
+            top: 8,
+            transform: [{ scale: nextCardScale }],
+            opacity: 0.9,
+          },
+        ];
+
+    const photoToShow = isCurrentCard ? currentPhotoIndex : 0;
 
     return (
       <Animated.View
@@ -136,90 +242,154 @@ export default function DiscoverScreen() {
         style={cardStyle}
         {...(isCurrentCard ? panResponder.panHandlers : {})}
       >
+        {/* Photo */}
         <Image
-          source={{ uri: profile.photos?.[0] || 'https://via.placeholder.com/400x600' }}
+          source={{ uri: profile.photos[photoToShow] }}
           style={styles.cardImage}
+          resizeMode="cover"
         />
 
-        {/* Like/Nope Labels */}
+        {/* Photo tap zones */}
+        {isCurrentCard && (
+          <View style={styles.tapZones}>
+            <TouchableOpacity
+              style={styles.tapLeft}
+              onPress={() => handlePhotoTap(profile, 'left')}
+              activeOpacity={1}
+            />
+            <TouchableOpacity
+              style={styles.tapRight}
+              onPress={() => handlePhotoTap(profile, 'right')}
+              activeOpacity={1}
+            />
+          </View>
+        )}
+
+        {/* Photo indicators */}
+        {isCurrentCard && renderPhotoIndicators(profile.photos)}
+
+        {/* Like/Nope stamps */}
         {isCurrentCard && (
           <>
-            <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]}>
-              <Text style={styles.likeLabelText}>LIKE</Text>
+            <Animated.View style={[styles.stamp, styles.likeStamp, { opacity: likeOpacity }]}>
+              <Text style={styles.likeStampText}>LIKE</Text>
             </Animated.View>
-            <Animated.View style={[styles.nopeLabel, { opacity: nopeOpacity }]}>
-              <Text style={styles.nopeLabelText}>NOPE</Text>
+            <Animated.View style={[styles.stamp, styles.nopeStamp, { opacity: nopeOpacity }]}>
+              <Text style={styles.nopeStampText}>NOPE</Text>
             </Animated.View>
           </>
         )}
 
-        {/* Profile Info */}
-        <View style={styles.cardInfo}>
+        {/* Gradient overlay */}
+        <View style={styles.gradient} />
+
+        {/* Profile info overlay */}
+        <View style={styles.profileInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.cardName}>{profile.name}, {profile.age}</Text>
-            {profile.isVerified && <Text style={styles.verified}>✓</Text>}
+            <Text style={styles.name}>{profile.name}</Text>
+            <Text style={styles.age}>{profile.age}</Text>
+            {profile.isVerified && (
+              <View style={styles.verifiedBadge}>
+                <Text style={styles.verifiedIcon}>✓</Text>
+              </View>
+            )}
           </View>
-          {profile.city && <Text style={styles.cardCity}>📍 {profile.city}</Text>}
-          {profile.distance && <Text style={styles.cardDistance}>{profile.distance} km away</Text>}
-          {profile.bio && <Text style={styles.cardBio} numberOfLines={2}>{profile.bio}</Text>}
-          {profile.interests?.length > 0 && (
-            <View style={styles.interestRow}>
-              {profile.interests.slice(0, 4).map((interest, i) => (
-                <View key={i} style={styles.interestTag}>
-                  <Text style={styles.interestTagText}>{interest}</Text>
-                </View>
-              ))}
+
+          {profile.job && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoIcon}>💼</Text>
+              <Text style={styles.infoText}>{profile.job}</Text>
             </View>
           )}
+
+          {profile.education && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoIcon}>🎓</Text>
+              <Text style={styles.infoText}>{profile.education}</Text>
+            </View>
+          )}
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoIcon}>📍</Text>
+            <Text style={styles.infoText}>{profile.city} • {profile.distance} km away</Text>
+          </View>
+
+          <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
+
+          <View style={styles.interestRow}>
+            {profile.interests.slice(0, 5).map((interest, i) => (
+              <View key={i} style={styles.interestTag}>
+                <Text style={styles.interestText}>{interest}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </Animated.View>
     );
   };
 
-  if (loading && profiles.length === 0) {
+  if (currentIndex >= profiles.length) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#FF4458" style={styles.loader} />
-      </SafeAreaView>
-    );
-  }
-
-  if (currentIndex >= profiles.length && !loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyTitle}>No more profiles</Text>
-          <Text style={styles.emptyText}>Check back later for new people near you</Text>
-          <TouchableOpacity style={styles.refreshBtn} onPress={loadProfiles}>
-            <Text style={styles.refreshBtnText}>Refresh</Text>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <Text style={styles.logo}>🔥 Spark</Text>
+          <TouchableOpacity style={styles.filterBtn}>
+            <Text style={styles.filterIcon}>⚙️</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>🔍</Text>
+          <Text style={styles.emptyTitle}>No More Profiles</Text>
+          <Text style={styles.emptyText}>You've seen everyone nearby.{'\n'}Check back later for new people!</Text>
+          <TouchableOpacity style={styles.refreshBtn} onPress={() => { setCurrentIndex(0); setCurrentPhotoIndex(0); }}>
+            <Text style={styles.refreshBtnText}>Refresh Profiles</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🔥 Spark</Text>
+        <Text style={styles.logo}>🔥 Spark</Text>
+        <TouchableOpacity style={styles.filterBtn}>
+          <Text style={styles.filterIcon}>⚙️</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Card Stack */}
       <View style={styles.cardStack}>
-        {profiles.slice(currentIndex, currentIndex + 3).reverse().map((profile, i) =>
-          renderCard(profile, currentIndex + (2 - i))
+        {profiles.slice(currentIndex, currentIndex + 2).reverse().map((profile, i) =>
+          renderCard(profile, currentIndex + (1 - i))
         )}
       </View>
 
       {/* Action Buttons */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={[styles.actionBtn, styles.skipBtn]}
+          style={[styles.actionBtn, styles.rewindBtn]}
           onPress={() => {
-            Animated.spring(position, {
+            if (currentIndex > 0) {
+              setCurrentIndex(currentIndex - 1);
+              setCurrentPhotoIndex(0);
+            }
+          }}
+        >
+          <Text style={styles.actionIcon}>↩️</Text>
+          <Text style={styles.actionLabel}>Rewind</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.nopeBtn]}
+          onPress={() => {
+            Animated.timing(position, {
               toValue: { x: -width - 100, y: 0 },
+              duration: 300,
               useNativeDriver: false,
             }).start(() => {
               handleSwipe('LEFT');
@@ -227,14 +397,33 @@ export default function DiscoverScreen() {
             });
           }}
         >
-          <Text style={styles.actionBtnText}>✕</Text>
+          <Text style={[styles.actionIcon, { fontSize: 32 }]}>✕</Text>
+          <Text style={styles.actionLabel}>Nope</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionBtn, styles.likeBtn]}
+          style={[styles.actionBtn, styles.superLikeBtn]}
           onPress={() => {
-            Animated.spring(position, {
+            Animated.timing(position, {
+              toValue: { x: 0, y: -height },
+              duration: 300,
+              useNativeDriver: false,
+            }).start(() => {
+              handleSwipe('SUPERLIKE');
+              position.setValue({ x: 0, y: 0 });
+            });
+          }}
+        >
+          <Text style={[styles.actionIcon, { fontSize: 28 }]}>⭐</Text>
+          <Text style={styles.actionLabel}>Super</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.likeActionBtn]}
+          onPress={() => {
+            Animated.timing(position, {
               toValue: { x: width + 100, y: 0 },
+              duration: 300,
               useNativeDriver: false,
             }).start(() => {
               handleSwipe('RIGHT');
@@ -242,62 +431,91 @@ export default function DiscoverScreen() {
             });
           }}
         >
-          <Text style={styles.actionBtnText}>♥</Text>
+          <Text style={[styles.actionIcon, { fontSize: 32 }]}>♥</Text>
+          <Text style={styles.actionLabel}>Like</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.boostBtn]}
+          onPress={() => Alert.alert('🚀 Boost Activated!', 'Your profile will be shown to more people for 30 minutes!')}
+        >
+          <Text style={styles.actionIcon}>⚡</Text>
+          <Text style={styles.actionLabel}>Boost</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  loader: { flex: 1, justifyContent: 'center' },
-  header: { paddingHorizontal: 20, paddingVertical: 10, alignItems: 'center' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#FF4458' },
-  cardStack: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#f8f8f8' },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10,
+  },
+  logo: { fontSize: 28, fontWeight: '800', color: '#FF4458' },
+  filterBtn: { padding: 8 },
+  filterIcon: { fontSize: 22 },
+  cardStack: { flex: 1, alignItems: 'center', justifyContent: 'center', marginHorizontal: 10 },
   card: {
     position: 'absolute',
-    width: width - 40,
-    height: height * 0.62,
-    borderRadius: 20,
+    width: width - 20,
+    height: CARD_HEIGHT,
+    borderRadius: 16,
     backgroundColor: '#fff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
     overflow: 'hidden',
   },
-  cardImage: { width: '100%', height: '65%', backgroundColor: '#e0e0e0' },
-  cardInfo: { padding: 15, flex: 1 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardName: { fontSize: 22, fontWeight: 'bold', color: '#222' },
-  verified: { fontSize: 16, color: '#4CAF50', fontWeight: 'bold' },
-  cardCity: { fontSize: 14, color: '#666', marginTop: 3 },
-  cardDistance: { fontSize: 12, color: '#999', marginTop: 2 },
-  cardBio: { fontSize: 14, color: '#444', marginTop: 6 },
-  interestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  interestTag: { backgroundColor: '#FFF0F1', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  interestTagText: { fontSize: 12, color: '#FF4458' },
-  likeLabel: {
-    position: 'absolute', top: 40, left: 20, borderWidth: 3,
-    borderColor: '#4CAF50', borderRadius: 5, padding: 8, transform: [{ rotate: '-15deg' }],
+  cardImage: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 },
+  tapZones: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', zIndex: 10 },
+  tapLeft: { flex: 1 },
+  tapRight: { flex: 1 },
+  photoIndicators: {
+    position: 'absolute', top: 12, left: 10, right: 10,
+    flexDirection: 'row', gap: 4, zIndex: 20,
   },
-  likeLabelText: { fontSize: 28, fontWeight: 'bold', color: '#4CAF50' },
-  nopeLabel: {
-    position: 'absolute', top: 40, right: 20, borderWidth: 3,
-    borderColor: '#FF4458', borderRadius: 5, padding: 8, transform: [{ rotate: '15deg' }],
+  indicator: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.4)' },
+  activeIndicator: { backgroundColor: '#fff' },
+  stamp: { position: 'absolute', top: 80, zIndex: 30, borderWidth: 4, borderRadius: 8, padding: 10 },
+  likeStamp: { left: 20, borderColor: '#4CAF50', transform: [{ rotate: '-15deg' }] },
+  likeStampText: { fontSize: 36, fontWeight: '900', color: '#4CAF50' },
+  nopeStamp: { right: 20, borderColor: '#FF4458', transform: [{ rotate: '15deg' }] },
+  nopeStampText: { fontSize: 36, fontWeight: '900', color: '#FF4458' },
+  gradient: {
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
+    backgroundColor: 'transparent',
+    backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
   },
-  nopeLabelText: { fontSize: 28, fontWeight: 'bold', color: '#FF4458' },
-  actions: { flexDirection: 'row', justifyContent: 'center', gap: 30, paddingVertical: 20 },
-  actionBtn: { width: 64, height: 64, borderRadius: 32, justifyContent: 'center', alignItems: 'center', elevation: 3 },
-  skipBtn: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#FF4458' },
-  likeBtn: { backgroundColor: '#FF4458' },
-  actionBtnText: { fontSize: 28 },
+  profileInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 5 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  name: { fontSize: 28, fontWeight: '800', color: '#fff' },
+  age: { fontSize: 26, fontWeight: '400', color: '#fff' },
+  verifiedBadge: { backgroundColor: '#4FC3F7', width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
+  verifiedIcon: { fontSize: 13, color: '#fff', fontWeight: 'bold' },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  infoIcon: { fontSize: 14 },
+  infoText: { fontSize: 15, color: 'rgba(255,255,255,0.9)' },
+  bio: { fontSize: 15, color: 'rgba(255,255,255,0.85)', marginTop: 8, lineHeight: 20 },
+  interestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  interestTag: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  interestText: { fontSize: 13, color: '#fff', fontWeight: '500' },
+  actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12, paddingVertical: 15, paddingBottom: 25 },
+  actionBtn: { alignItems: 'center', justifyContent: 'center', borderRadius: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 5, elevation: 4 },
+  rewindBtn: { width: 48, height: 48, backgroundColor: '#fff', borderRadius: 24 },
+  nopeBtn: { width: 60, height: 60, backgroundColor: '#fff', borderRadius: 30, borderWidth: 2, borderColor: '#FF4458' },
+  superLikeBtn: { width: 48, height: 48, backgroundColor: '#fff', borderRadius: 24, borderWidth: 2, borderColor: '#29B6F6' },
+  likeActionBtn: { width: 60, height: 60, backgroundColor: '#FF4458', borderRadius: 30 },
+  boostBtn: { width: 48, height: 48, backgroundColor: '#fff', borderRadius: 24, borderWidth: 2, borderColor: '#9C27B0' },
+  actionIcon: { fontSize: 24 },
+  actionLabel: { fontSize: 10, color: '#666', marginTop: 2 },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyEmoji: { fontSize: 60 },
-  emptyTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginTop: 15 },
-  emptyText: { fontSize: 15, color: '#666', marginTop: 8, textAlign: 'center' },
-  refreshBtn: { backgroundColor: '#FF4458', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 25, marginTop: 20 },
-  refreshBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  emptyEmoji: { fontSize: 70 },
+  emptyTitle: { fontSize: 26, fontWeight: '800', color: '#333', marginTop: 20 },
+  emptyText: { fontSize: 16, color: '#666', marginTop: 10, textAlign: 'center', lineHeight: 24 },
+  refreshBtn: { backgroundColor: '#FF4458', paddingHorizontal: 35, paddingVertical: 14, borderRadius: 30, marginTop: 25 },
+  refreshBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
 });
