@@ -1,55 +1,58 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
+const DEMO_USER = {
+  id: 'demo-user-1',
+  name: 'Rahul Verma',
+  age: 27,
+  gender: 'MALE',
+  bio: 'Startup founder | Fitness freak | Foodie | Looking for something real',
+  photos: [
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+  ],
+  interests: ['Fitness', 'Startups', 'Food', 'Movies', 'Cricket', 'Travel'],
+  city: 'New Delhi',
+  phone: '+919876543211',
+  isVerified: true,
+  isActive: true,
+  profileApproved: true,
+  minAgePreference: 20,
+  maxAgePreference: 30,
+  maxDistance: 50,
+  genderPreference: 'FEMALE',
+  latitude: 28.6139,
+  longitude: 77.2090,
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
-    try {
-      const savedToken = await AsyncStorage.getItem('token');
-      if (savedToken) {
-        setToken(savedToken);
-        const response = await authAPI.getMe();
-        setUser(response.data.user);
-      }
-    } catch (error) {
-      await AsyncStorage.removeItem('token');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Auto-login with demo user for preview
+  const [user, setUser] = useState(DEMO_USER);
+  const [token, setToken] = useState('demo-token');
+  const [loading, setLoading] = useState(false);
 
   const login = async (phone) => {
-    const response = await authAPI.loginWithPhone(phone);
-    const { user, token } = response.data;
-    await AsyncStorage.setItem('token', token);
-    setToken(token);
-    setUser(user);
-    return user;
+    setUser(DEMO_USER);
+    setToken('demo-token');
+    return DEMO_USER;
   };
 
   const register = async (userData) => {
-    const response = await authAPI.register(userData);
-    const { user, token } = response.data;
-    await AsyncStorage.setItem('token', token);
-    setToken(token);
-    setUser(user);
-    return user;
+    const newUser = { ...DEMO_USER, ...userData, id: 'new-user' };
+    setUser(newUser);
+    setToken('demo-token');
+    return newUser;
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    // Re-login for demo after 1 sec
+    setTimeout(() => {
+      setUser(DEMO_USER);
+      setToken('demo-token');
+    }, 1000);
   };
 
   const updateUser = (updatedUser) => {

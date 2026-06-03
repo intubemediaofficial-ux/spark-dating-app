@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,73 +11,49 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { chatAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { io } from 'socket.io-client';
+
+const DEMO_MESSAGES = [
+  { id: '1', senderId: 'u1', content: 'Hey! I saw we matched 😊', createdAt: new Date(Date.now() - 3600000).toISOString() },
+  { id: '2', senderId: 'demo-user-1', content: 'Hi! Yes, nice to meet you! How are you?', createdAt: new Date(Date.now() - 3500000).toISOString() },
+  { id: '3', senderId: 'u1', content: 'I\'m great! I loved your bio. You\'re into fitness too?', createdAt: new Date(Date.now() - 3400000).toISOString() },
+  { id: '4', senderId: 'demo-user-1', content: 'Yes! I workout 5 days a week. What about you?', createdAt: new Date(Date.now() - 3300000).toISOString() },
+  { id: '5', senderId: 'u1', content: 'That\'s awesome! I do yoga mostly. Maybe we could workout together sometime? 💪', createdAt: new Date(Date.now() - 3200000).toISOString() },
+  { id: '6', senderId: 'demo-user-1', content: 'Sounds like a plan! Where do you usually go?', createdAt: new Date(Date.now() - 600000).toISOString() },
+  { id: '7', senderId: 'u1', content: 'Hey! How are you? 😊', createdAt: new Date(Date.now() - 300000).toISOString() },
+];
 
 export default function ChatScreen({ route, navigation }) {
   const { match } = route.params;
   const { user } = useAuth();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(DEMO_MESSAGES);
   const [text, setText] = useState('');
-  const [loading, setLoading] = useState(true);
   const flatListRef = useRef(null);
-  const socketRef = useRef(null);
 
-  useEffect(() => {
-    loadMessages();
-    setupSocket();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  const setupSocket = () => {
-    socketRef.current = io('http://localhost:5000');
-    socketRef.current.emit('join', user.id);
-
-    socketRef.current.on('newMessage', (message) => {
-      if (message.matchId === match.matchId) {
-        setMessages(prev => [...prev, message]);
-      }
-    });
-  };
-
-  const loadMessages = async () => {
-    try {
-      const response = await chatAPI.getMessages(match.matchId);
-      setMessages(response.data.messages);
-    } catch (error) {
-      console.error('Load messages error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!text.trim()) return;
 
-    const messageText = text.trim();
+    const newMessage = {
+      id: Date.now().toString(),
+      senderId: user.id,
+      content: text.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages(prev => [...prev, newMessage]);
     setText('');
 
-    try {
-      // Send via socket for real-time
-      socketRef.current?.emit('sendMessage', {
-        matchId: match.matchId,
-        content: messageText,
-        senderId: user.id,
-        receiverId: match.user.id,
-      });
-
-      // Also send via API as backup
-      const response = await chatAPI.sendMessage(match.matchId, messageText);
-      setMessages(prev => [...prev, response.data.message]);
-    } catch (error) {
-      console.error('Send message error:', error);
-    }
+    // Simulate reply
+    setTimeout(() => {
+      const replies = ['That sounds great! 😄', 'Haha, I love that!', 'Tell me more about it...', 'Same here! 🙌', 'Let\'s plan something this weekend!'];
+      const reply = {
+        id: (Date.now() + 1).toString(),
+        senderId: match.user.id,
+        content: replies[Math.floor(Math.random() * replies.length)],
+        createdAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, reply]);
+    }, 2000);
   };
 
   const renderMessage = ({ item }) => {
@@ -102,7 +78,7 @@ export default function ChatScreen({ route, navigation }) {
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
         <Image
-          source={{ uri: match.user.photos?.[0] || 'https://via.placeholder.com/40' }}
+          source={{ uri: match.user.photos[0] }}
           style={styles.headerAvatar}
         />
         <View style={styles.headerInfo}>
@@ -127,11 +103,6 @@ export default function ChatScreen({ route, navigation }) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-          ListEmptyComponent={
-            <View style={styles.emptyChat}>
-              <Text style={styles.emptyChatText}>Say hello to start the conversation! 👋</Text>
-            </View>
-          }
         />
 
         {/* Input */}
@@ -181,8 +152,6 @@ const styles = StyleSheet.create({
   myMessageText: { color: '#fff' },
   messageTime: { fontSize: 11, color: '#999', marginTop: 4, alignSelf: 'flex-end' },
   myMessageTime: { color: 'rgba(255,255,255,0.7)' },
-  emptyChat: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 },
-  emptyChatText: { fontSize: 16, color: '#999' },
   inputContainer: {
     flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 15,
     paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#f0f0f0',
