@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -19,26 +20,33 @@ import SettingsScreen from '../screens/SettingsScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const TabIcon = ({ label, focused }) => {
+const TabIcon = ({ label, focused, t }) => {
   const icons = {
     Discover: '🔥',
     Matches: '❤️',
     Chat: '💬',
     Profile: '👤',
   };
+  const translatedLabels = {
+    Discover: t('discover'),
+    Matches: t('matches'),
+    Chat: t('chat'),
+    Profile: t('profile'),
+  };
   return (
     <View style={{ alignItems: 'center' }}>
       <Text style={{ fontSize: 22 }}>{icons[label]}</Text>
-      <Text style={{ fontSize: 11, color: focused ? '#FF4458' : '#999', marginTop: 2, fontWeight: focused ? '700' : '400' }}>{label}</Text>
+      <Text style={{ fontSize: 11, color: focused ? '#FF4458' : '#999', marginTop: 2, fontWeight: focused ? '700' : '400' }}>{translatedLabels[label]}</Text>
     </View>
   );
 };
 
 function MainTabs() {
+  const { t } = useLanguage();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused }) => <TabIcon label={route.name} focused={focused} />,
+        tabBarIcon: ({ focused }) => <TabIcon label={route.name} focused={focused} t={t} />,
         tabBarShowLabel: false,
         tabBarActiveTintColor: '#FF4458',
         tabBarInactiveTintColor: '#888',
