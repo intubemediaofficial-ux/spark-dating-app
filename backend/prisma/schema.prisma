@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  firebaseUid   String?   @unique
+  phone         String?   @unique
+  email         String?   @unique
+  name          String
+  age           Int
+  gender        Gender
+  bio           String?
+  photos        String[]  // Array of photo URLs
+  interests     String[]
+  latitude      Float?
+  longitude     Float?
+  city          String?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  isBanned      Boolean   @default(false)
+  isAdmin       Boolean   @default(false)
+  profileApproved Boolean @default(false)
+  minAgePreference Int    @default(18)
+  maxAgePreference Int    @default(50)
+  maxDistance      Int    @default(50) // in km
+  genderPreference GenderPreference @default(EVERYONE)
+  lastActive    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  sentSwipes      Swipe[]   @relation("SentSwipes")
+  receivedSwipes  Swipe[]   @relation("ReceivedSwipes")
+  sentMessages    Message[] @relation("SentMessages")
+  matchesAsUser1  Match[]   @relation("MatchUser1")
+  matchesAsUser2  Match[]   @relation("MatchUser2")
+  reportsMade     Report[]  @relation("ReportsMade")
+  reportsReceived Report[]  @relation("ReportsReceived")
+  blockedUsers    Block[]   @relation("BlockedBy")
+  blockedByUsers  Block[]   @relation("BlockedUser")
+
+  @@index([latitude, longitude])
+  @@index([gender])
+  @@index([isActive, isBanned])
+}
+
+model Swipe {
+  id        String    @id @default(uuid())
+  swiperId  String
+  swipedId  String
+  direction SwipeDirection
+  createdAt DateTime  @default(now())
+
+  swiper    User      @relation("SentSwipes", fields: [swiperId], references: [id])
+  swiped    User      @relation("ReceivedSwipes", fields: [swipedId], references: [id])
+
+  @@unique([swiperId, swipedId])
+  @@index([swipedId, direction])
+}
+
+model Match {
+  id        String    @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  user1     User      @relation("MatchUser1", fields: [user1Id], references: [id])
+  user2     User      @relation("MatchUser2", fields: [user2Id], references: [id])
+  messages  Message[]
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model Message {
+  id        String    @id @default(uuid())
+  matchId   String
+  senderId  String
+  content   String
+  type      MessageType @default(TEXT)
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  match     Match     @relation(fields: [matchId], references: [id])
+  sender    User      @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([matchId, createdAt])
+}
+
+model Report {
+  id          String    @id @default(uuid())
+  reporterId  String
+  reportedId  String
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  reporter    User      @relation("ReportsMade", fields: [reporterId], references: [id])
+  reported    User      @relation("ReportsReceived", fields: [reportedId], references: [id])
+
+  @@index([status])
+}
+
+model Block {
+  id        String    @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime  @default(now())
+
+  blocker   User      @relation("BlockedBy", fields: [blockerId], references: [id])
+  blocked   User      @relation("BlockedUser", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+}
+
+enum GenderPreference {
+  MALE
+  FEMALE
+  EVERYONE
+}
+
+enum SwipeDirection {
+  LEFT
+  RIGHT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+}
+
+enum ReportReason {
+  FAKE_PROFILE
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  SPAM
+  UNDERAGE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
