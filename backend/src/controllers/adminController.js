@@ -176,4 +176,155 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, toggleBanUser, approveProfile, getReports, resolveReport, getDashboardStats };
+// Get bot profiles
+const getBots = async (req, res) => {
+  try {
+    const { page = 1, gender = 'ALL' } = req.query;
+    const limit = 20;
+
+    let where = { isBot: true };
+    if (gender !== 'ALL') where.gender = gender;
+
+    const [bots, total, female, male] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip: (parseInt(page) - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, name: true, age: true, gender: true,
+          city: true, photos: true, isBot: true,
+        },
+      }),
+      prisma.user.count({ where: { isBot: true } }),
+      prisma.user.count({ where: { isBot: true, gender: 'FEMALE' } }),
+      prisma.user.count({ where: { isBot: true, gender: 'MALE' } }),
+    ]);
+
+    res.json({ bots, stats: { total, female, male } });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get bots' });
+  }
+};
+
+// Get settings
+const getSettings = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const envPath = path.join(__dirname, '../../.env');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const envVars = {};
+    envContent.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length) {
+        envVars[key.trim()] = valueParts.join('=').trim().replace(/^"|"$/g, '');
+      }
+    });
+
+    res.json({
+      razorpayKeyId: envVars.RAZORPAY_KEY_ID || '',
+      razorpayKeySecret: envVars.RAZORPAY_KEY_SECRET ? '********' : '',
+      firebaseProjectId: envVars.FIREBASE_PROJECT_ID || '',
+      firebaseApiKey: envVars.FIREBASE_API_KEY || '',
+      cloudinaryCloudName: envVars.CLOUDINARY_CLOUD_NAME || '',
+      cloudinaryApiKey: envVars.CLOUDINARY_API_KEY || '',
+      cloudinaryApiSecret: envVars.CLOUDINARY_API_SECRET ? '********' : '',
+      jwtSecret: envVars.JWT_SECRET ? '********' : '',
+      corsOrigin: envVars.CORS_ORIGIN || '',
+      appName: 'MatchKar',
+      dailyLikeLimit: envVars.DAILY_LIKE_LIMIT || '20',
+      subscriptionPriceGold: envVars.SUBSCRIPTION_PRICE_GOLD || '199',
+      subscriptionPricePlatinum: envVars.SUBSCRIPTION_PRICE_PLATINUM || '399',
+      botAutoLikePercentage: envVars.BOT_AUTO_LIKE_PERCENTAGE || '35',
+      botReplyDelay: envVars.BOT_REPLY_DELAY || '3',
+      maxBotReplies: envVars.MAX_BOT_REPLIES || '4',
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get settings' });
+  }
+};
+
+// Update settings
+const updateSettings = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const envPath = path.join(__dirname, '../../.env');
+    const settings = req.body;
+
+    // Read current env
+    let envContent = fs.readFileSync(envPath, 'utf8');
+
+    // Update values (skip masked ones)
+    const updates = {
+      RAZORPAY_KEY_ID: settings.razorpayKeyId,
+      RAZORPAY_KEY_SECRET: settings.razorpayKeySecret,
+      FIREBASE_PROJECT_ID: settings.firebaseProjectId,
+      FIREBASE_API_KEY: settings.firebaseApiKey,
+      CLOUDINARY_CLOUD_NAME: settings.cloudinaryCloudName,
+      CLOUDINARY_API_KEY: settings.cloudinaryApiKey,
+      CLOUDINARY_API_SECRET: settings.cloudinaryApiSecret,
+      JWT_SECRET: settings.jwtSecret,
+      CORS_ORIGIN: settings.corsOrigin,
+      DAILY_LIKE_LIMIT: settings.dailyLikeLimit,
+      SUBSCRIPTION_PRICE_GOLD: settings.subscriptionPriceGold,
+      SUBSCRIPTION_PRICE_PLATINUM: settings.subscriptionPricePlatinum,
+      BOT_AUTO_LIKE_PERCENTAGE: settings.botAutoLikePercentage,
+      BOT_REPLY_DELAY: settings.botReplyDelay,
+      MAX_BOT_REPLIES: settings.maxBotReplies,
+    };
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value || value === '********') continue;
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      if (envContent.match(regex)) {
+        envContent = envContent.replace(regex, `${key}=${value}`);
+      } else {
+        envContent += `\n${key}=${value}`;
+      }
+    }
+
+    fs.writeFileSync(envPath, envContent);
+    res.json({ message: 'Settings saved successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+};
+
+// Get subscriptions
+const getSubscriptions = async (req, res) => {
+  try {
+    const subscriptions = await prisma.subscription.findMany({
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    const stats = {
+      totalRevenue: subscriptions.reduce((sum, s) => sum + (s.amount || 0), 0),
+      activeSubscriptions: subscriptions.filter(s => s.status === 'ACTIVE').length,
+      goldCount: subscriptions.filter(s => s.plan === 'GOLD').length,
+      platinumCount: subscriptions.filter(s => s.plan === 'PLATINUM').length,
+    };
+
+    res.json({
+      subscriptions: subscriptions.map(s => ({
+        id: s.id,
+        userId: s.userId,
+        userName: s.user?.name || 'Unknown',
+        plan: s.plan,
+        amount: s.amount || 0,
+        status: s.status,
+        startDate: s.createdAt,
+        endDate: s.expiresAt,
+      })),
+      stats,
+    });
+  } catch (error) {
+    // If subscription table doesn't exist yet, return empty
+    res.json({ subscriptions: [], stats: { totalRevenue: 0, activeSubscriptions: 0, goldCount: 0, platinumCount: 0 } });
+  }
+};
+
+module.exports = { getUsers, toggleBanUser, approveProfile, getReports, resolveReport, getDashboardStats, getBots, getSettings, updateSettings, getSubscriptions };

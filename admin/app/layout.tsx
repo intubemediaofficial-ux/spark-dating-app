@@ -34,6 +34,15 @@ export default function RootLayout({
               <a href="/matches" className="flex items-center px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-500 transition">
                 <span className="mr-3">💕</span> Matches
               </a>
+              <a href="/bots" className="flex items-center px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-500 transition">
+                <span className="mr-3">🤖</span> Bots
+              </a>
+              <a href="/subscriptions" className="flex items-center px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-500 transition">
+                <span className="mr-3">💎</span> Subscriptions
+              </a>
+              <a href="/settings" className="flex items-center px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-500 transition">
+                <span className="mr-3">⚙️</span> Settings
+              </a>
             </nav>
           </aside>
 
