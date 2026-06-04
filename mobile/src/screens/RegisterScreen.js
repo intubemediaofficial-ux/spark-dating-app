@@ -42,8 +42,17 @@ export default function RegisterScreen({ navigation, route }) {
         Alert.alert('Error', 'Please fill all required fields');
         return;
       }
-      if (parseInt(formData.age) < 18) {
-        Alert.alert('Error', 'You must be 18 or older');
+      const age = parseInt(formData.age);
+      if (isNaN(age) || age < 18) {
+        Alert.alert(
+          'Age Restriction',
+          'You must be at least 18 years old to use MatchKar. This is required by law and our Terms of Service.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      if (age > 100) {
+        Alert.alert('Error', 'Please enter a valid age');
         return;
       }
     }
@@ -108,13 +117,14 @@ export default function RegisterScreen({ navigation, route }) {
 
       <TextInput
         style={styles.input}
-        placeholder="Age"
+        placeholder="Age (must be 18+)"
         placeholderTextColor="#999"
         keyboardType="number-pad"
         value={formData.age}
         onChangeText={(text) => setFormData({ ...formData, age: text })}
         maxLength={2}
       />
+      <Text style={{ fontSize: 12, color: '#999', marginTop: -8, marginBottom: 8, marginLeft: 5 }}>You must be 18 or older to use MatchKar</Text>
 
       <Text style={styles.label}>Gender</Text>
       <View style={styles.genderRow}>

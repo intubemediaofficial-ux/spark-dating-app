@@ -1,4 +1,4 @@
-# 🔥 Spark Dating App
+# 🔥 MatchKar Dating App
 
 A full-stack Tinder-like dating app MVP with mobile app, backend API, and admin dashboard.
 

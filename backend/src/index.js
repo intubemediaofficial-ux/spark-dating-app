@@ -6,12 +6,15 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
+const { refreshBotActivity } = require('./services/botService');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const swipeRoutes = require('./routes/swipe');
 const chatRoutes = require('./routes/chat');
 const safetyRoutes = require('./routes/safety');
 const adminRoutes = require('./routes/admin');
+const paymentRoutes = require('./routes/payment');
+const notificationRoutes = require('./routes/notification');
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +41,8 @@ app.use('/api/swipe', swipeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/safety', safetyRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -125,7 +130,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Spark Dating API running on port ${PORT}`);
+  console.log(`🚀 MatchKar API running on port ${PORT}`);
+
+  // Refresh bot activity every 2 hours
+  setInterval(() => {
+    refreshBotActivity().catch(() => {});
+  }, 2 * 60 * 60 * 1000);
 });
 
 module.exports = { app, server, io };

@@ -357,7 +357,7 @@ export default function DiscoverScreen() {
 
       {/* Top overlay - Logo + Distance filter */}
       <View style={styles.topOverlay}>
-        <Text style={styles.logo}>🔥 Spark</Text>
+        <Text style={styles.logo}>🔥 MatchKar</Text>
         <TouchableOpacity style={styles.distanceBtn} onPress={() => setShowDistanceFilter(!showDistanceFilter)}>
           <Text style={styles.distanceBtnText}>📍 {selectedDistance} km</Text>
         </TouchableOpacity>
@@ -459,7 +459,7 @@ export default function DiscoverScreen() {
             <Text style={styles.limitEmoji}>💔</Text>
             <Text style={styles.limitTitle}>{t('dailyLimitReached')}</Text>
             <Text style={styles.limitText}>{t('usedAllLikes', { count: DAILY_LIKE_LIMIT })}</Text>
-            <Text style={styles.limitUpgrade}>{t('upgradeTo')} <Text style={{ color: '#FFB300', fontWeight: '800' }}>Spark Gold</Text> {t('forUnlimited')}</Text>
+            <Text style={styles.limitUpgrade}>{t('upgradeTo')} <Text style={{ color: '#FFB300', fontWeight: '800' }}>MatchKar Gold</Text> {t('forUnlimited')}</Text>
             <TouchableOpacity style={styles.limitUpgradeBtn} onPress={() => setShowLimitModal(false)}>
               <Text style={styles.limitUpgradeBtnText}>{t('upgradeNow')} - ₹199/mo</Text>
             </TouchableOpacity>

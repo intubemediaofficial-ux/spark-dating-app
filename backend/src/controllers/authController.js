@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
 const { generateToken } = require('../utils/helpers');
 const bcrypt = require('bcryptjs');
+const { botAutoLike } = require('../services/botService');
 
 // Register a new user
 const register = async (req, res) => {
@@ -41,6 +42,10 @@ const register = async (req, res) => {
     });
 
     const token = generateToken(user.id);
+
+    // Trigger bot auto-likes for this new user (async, non-blocking)
+    botAutoLike(user.id).catch(() => {});
+
     res.status(201).json({ user, token });
   } catch (error) {
     console.error('Register error:', error);

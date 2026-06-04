@@ -1,5 +1,5 @@
 {
-  "name": "spark-dating-backend",
+  "name": "matchkar-backend",
   "version": "1.0.0",
   "main": "src/index.js",
   "scripts": {
@@ -8,13 +8,14 @@
     "db:migrate": "npx prisma migrate dev",
     "db:push": "npx prisma db push",
     "db:seed": "node prisma/seed.js",
+    "db:seed-bots": "node prisma/seed-bots.js",
     "db:studio": "npx prisma studio",
     "postinstall": "npx prisma generate"
   },
-  "keywords": ["dating", "app", "tinder", "spark"],
-  "author": "Spark Dating",
+  "keywords": ["dating", "app", "tinder", "matchkar"],
+  "author": "MatchKar",
   "license": "ISC",
-  "description": "Spark Dating App - Backend API",
+  "description": "MatchKar Dating App - Backend API",
   "dependencies": {
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
@@ -29,6 +30,7 @@
     "morgan": "^1.11.0",
     "multer": "^2.1.1",
     "socket.io": "^4.8.3",
+    "razorpay": "^2.9.6",
     "uuid": "^14.0.0"
   },
   "devDependencies": {

@@ -44,7 +44,7 @@ const uploadPhoto = async (req, res) => {
     // Upload to Cloudinary
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'spark-dating/profiles', transformation: [{ width: 800, height: 800, crop: 'limit' }] },
+        { folder: 'matchkar/profiles', transformation: [{ width: 800, height: 800, crop: 'limit' }] },
         (error, result) => {
           if (error) reject(error);
           else resolve(result);

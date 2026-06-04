@@ -51,8 +51,8 @@ export default function LoginScreen({ navigation }) {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🔥</Text>
-          <Text style={styles.appName}>Spark</Text>
-          <Text style={styles.tagline}>Find Your Perfect Match</Text>
+          <Text style={styles.appName}>MatchKar</Text>
+          <Text style={styles.tagline}>Match Kar, Pyaar Kar</Text>
         </View>
 
         {/* Login Form */}
