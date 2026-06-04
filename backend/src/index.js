@@ -49,6 +49,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Privacy Policy page (required for Play Store)
+app.get('/privacy', (req, res) => {
+  res.send(require('./pages/privacy'));
+});
+
+// Terms of Service page (required for Play Store)
+app.get('/terms', (req, res) => {
+  res.send(require('./pages/terms'));
+});
+
+// Data Deletion page (required for Play Store dating apps)
+app.get('/delete-account', (req, res) => {
+  res.send(require('./pages/deleteAccount'));
+});
+
 // Socket.IO for real-time chat
 const onlineUsers = new Map();
 
