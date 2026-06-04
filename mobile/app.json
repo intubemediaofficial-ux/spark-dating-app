@@ -13,7 +13,22 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.matchkar.app"
+      "bundleIdentifier": "com.matchkar.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "MatchKar needs your location to show nearby people and calculate distance.",
+        "NSCameraUsageDescription": "MatchKar needs camera access to take profile photos.",
+        "NSPhotoLibraryUsageDescription": "MatchKar needs photo library access to upload profile photos.",
+        "NSPhotoLibraryAddUsageDescription": "MatchKar needs permission to save photos to your library.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "your-reversed-client-id"
+        }
+      },
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "associatedDomains": ["applinks:matchkar.com"]
     },
     "android": {
       "package": "com.matchkar.app",

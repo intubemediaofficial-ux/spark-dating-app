@@ -1,6 +1,6 @@
 # MatchKar — Deployment Guide
 
-Complete guide to deploy MatchKar on your DigitalOcean / Hostinger VPS and publish to Google Play Store.
+Complete guide to deploy MatchKar on your DigitalOcean / Hostinger VPS and publish to Google Play Store + Apple App Store.
 
 ---
 
@@ -222,23 +222,84 @@ https://docs.expo.dev/submit/android/#creating-a-google-service-account
 
 ---
 
-## 6. Firebase Setup
+## 6. Apple App Store Deployment (iOS)
 
-### 6.1 Create Firebase Project
+### 6.1 Prerequisites
+
+1. **Apple Developer Account** — https://developer.apple.com/programs/ ($99/year)
+2. **EAS CLI** installed: `npm install -g eas-cli`
+3. **Expo account** — https://expo.dev/signup
+
+### 6.2 Setup Apple credentials
+
+```bash
+cd mobile
+eas credentials --platform ios
+```
+
+EAS will guide you through creating:
+- Distribution Certificate
+- Provisioning Profile
+- Push Notification Key (for FCM/APNs)
+
+### 6.3 Build IPA (for TestFlight testing)
+
+```bash
+eas build --platform ios --profile preview
+```
+
+This generates an IPA for internal testing via TestFlight.
+
+### 6.4 Build for App Store
+
+```bash
+eas build --platform ios --profile production
+```
+
+### 6.5 Submit to App Store
+
+```bash
+eas submit --platform ios --profile production
+```
+
+Or manually:
+1. Go to https://appstoreconnect.apple.com
+2. **My Apps → +** → New App → Name: "MatchKar", Bundle ID: com.matchkar.app
+3. **App Information:**
+   - Category: Social Networking → Dating
+   - Content Rights: Does not contain third-party content
+4. **Pricing:** Free
+5. **App Privacy:** Declare data collection (location, contacts)
+6. **Screenshots:** iPhone 6.7" + 5.5" screenshots required
+7. **Upload Build:** Via `eas submit` or Transporter app
+8. **Submit for Review** (1-3 days typical, up to 7 days first time)
+
+### 6.6 Firebase config for iOS
+
+- Download `GoogleService-Info.plist` from Firebase Console
+- Place in `mobile/` directory
+- This is referenced in `app.json` → `ios.googleServicesFile`
+
+---
+
+## 7. Firebase Setup
+
+### 7.1 Create Firebase Project
 
 1. Go to https://console.firebase.google.com
 2. Create project "MatchKar"
 3. Enable **Authentication** → Phone Sign-In
 4. Enable **Cloud Messaging**
 
-### 6.2 Download config files
+### 7.2 Download config files
 
 - **Android:** Download `google-services.json` → place in `mobile/`
+- **iOS:** Download `GoogleService-Info.plist` → place in `mobile/`
 - **Service Account:** Project Settings → Service Accounts → Generate New Private Key → save values to `.env`
 
 ---
 
-## 7. Razorpay Setup
+## 8. Razorpay Setup
 
 1. Go to https://dashboard.razorpay.com
 2. Sign up / Sign in
@@ -252,7 +313,7 @@ https://docs.expo.dev/submit/android/#creating-a-google-service-account
 
 ---
 
-## 8. Cloudinary Setup
+## 9. Cloudinary Setup
 
 1. Go to https://cloudinary.com/console
 2. Sign up (free plan: 25K images/month)
@@ -261,7 +322,7 @@ https://docs.expo.dev/submit/android/#creating-a-google-service-account
 
 ---
 
-## 9. Maintenance Commands
+## 10. Maintenance Commands
 
 ```bash
 # View logs
@@ -288,7 +349,7 @@ docker compose exec backend node prisma/seed-bots.js
 
 ---
 
-## 10. Monitoring
+## 11. Monitoring
 
 - **Server:** Use DigitalOcean monitoring or install `htop`
 - **API health:** `curl https://api.matchkar.com/api/health`
@@ -302,6 +363,7 @@ docker compose exec backend node prisma/seed-bots.js
 | Item | Cost |
 |------|------|
 | Play Store Account | ₹2,100 (one-time) |
+| App Store Account | ~₹8,300/yr ($99/yr) |
 | Domain (matchkar.com) | ~₹800/yr |
 | VPS (DigitalOcean/Hostinger) | ₹500-1500/mo |
 | Firebase | Free (up to 10K users) |

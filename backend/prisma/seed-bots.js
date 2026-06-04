@@ -191,8 +191,10 @@ const ALL_INTERESTS = [
   'K-pop', 'Gardening', 'Astronomy', 'DIY', 'Baking', 'Wine', 'Tea',
 ];
 
-// Placeholder profile photos
-const FEMALE_PHOTOS = [
+// Profile photos — each bot gets ONE person photo (first) + 2-3 lifestyle photos
+// This way photos look real — main selfie + nature/food/travel/pet pics (like real users)
+
+const FEMALE_PERSON_PHOTOS = [
   'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1000&fit=crop',
@@ -205,9 +207,17 @@ const FEMALE_PHOTOS = [
   'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1485893086445-ed75865251e0?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1523264653568-d3d4140cbfdb?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1557862921-37829c790f19?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1590650153855-d9e808231d41?w=800&h=1000&fit=crop',
 ];
 
-const MALE_PHOTOS = [
+const MALE_PERSON_PHOTOS = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&h=1000&fit=crop',
@@ -218,6 +228,54 @@ const MALE_PHOTOS = [
   'https://images.unsplash.com/photo-1463453091185-61582044d556?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1548372290-8d01b6c8e78c?w=800&h=1000&fit=crop',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=800&h=1000&fit=crop',
+];
+
+// Lifestyle photos — dogs, nature, food, travel, sunsets, coffee, etc.
+// These are mixed in as 2nd, 3rd, 4th photos to look like real profiles
+const LIFESTYLE_PHOTOS = [
+  // Dogs & pets
+  'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800&h=800&fit=crop',
+  // Nature & mountains
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1518173946687-a26759e5dda3?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=800&fit=crop',
+  // Sunsets & beach
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1476673160081-cf065607f449?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=800&fit=crop',
+  // Food & coffee
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=800&fit=crop',
+  // Travel & city
+  'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1506461883276-594a12b11cf3?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=800&fit=crop',
+  // Flowers & gardens
+  'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&h=800&fit=crop',
+  // Cats
+  'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=800&h=800&fit=crop',
+  // Rivers & waterfalls
+  'https://images.unsplash.com/photo-1432405972618-c6b0cfba8b4b?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1475924156734-496f401b2c26?w=800&h=800&fit=crop',
 ];
 
 // Helper functions
@@ -245,10 +303,16 @@ function generateProfile(index, gender) {
   const age = randomInt(18, 35);
   const cityData = randomItem(CITIES);
   const coords = jitterCoords(cityData.lat, cityData.lng);
-  const photos = randomSubset(isFemale ? FEMALE_PHOTOS : MALE_PHOTOS, 2, 5);
   const bio = randomItem(isFemale ? FEMALE_BIOS : MALE_BIOS);
   const job = randomItem(isFemale ? FEMALE_JOBS : MALE_JOBS);
   const interests = randomSubset(ALL_INTERESTS, 3, 7);
+
+  // Photo strategy: 1 real person photo (main) + 2-3 lifestyle photos (nature, dog, food, travel)
+  // This makes profiles look real — like how actual users upload their photos
+  const personPhotos = isFemale ? FEMALE_PERSON_PHOTOS : MALE_PERSON_PHOTOS;
+  const mainPhoto = personPhotos[index % personPhotos.length];
+  const lifestylePhotos = randomSubset(LIFESTYLE_PHOTOS, 2, 3);
+  const photos = [mainPhoto, ...lifestylePhotos];
 
   return {
     name,
@@ -270,10 +334,13 @@ function generateProfile(index, gender) {
 }
 
 async function seedBots() {
-  const TOTAL_BOTS = 3000;
+  const TOTAL_FEMALE = 2000;
+  const TOTAL_MALE = 1000;
+  const TOTAL_BOTS = TOTAL_FEMALE + TOTAL_MALE;
   const BATCH_SIZE = 100;
   
   console.log(`🤖 Starting MatchKar bot seeder — generating ${TOTAL_BOTS} profiles...`);
+  console.log(`   👩 ${TOTAL_FEMALE} female + 👨 ${TOTAL_MALE} male`);
   console.log('');
 
   let created = 0;
@@ -283,7 +350,8 @@ async function seedBots() {
     const profiles = [];
     for (let i = 0; i < BATCH_SIZE; i++) {
       const index = batch * BATCH_SIZE + i;
-      const gender = Math.random() > 0.5 ? 'FEMALE' : 'MALE';
+      // First 2000 are female, remaining 1000 are male
+      const gender = index < TOTAL_FEMALE ? 'FEMALE' : 'MALE';
       profiles.push(generateProfile(index, gender));
     }
 
