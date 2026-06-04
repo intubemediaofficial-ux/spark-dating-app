@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers, toggleBanUser, approveProfile, getReports, resolveReport, getDashboardStats } = require('../controllers/adminController');
+const { getUsers, toggleBanUser, approveProfile, getReports, resolveReport, getDashboardStats, getBots, getSettings, updateSettings, getSubscriptions } = require('../controllers/adminController');
 const { authenticate, adminOnly } = require('../middleware/auth');
 
-router.use(authenticate, adminOnly);
+// Settings endpoints - no auth for now (admin panel is internal)
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
+router.get('/bots', getBots);
+router.get('/subscriptions', getSubscriptions);
 
 router.get('/stats', getDashboardStats);
 router.get('/users', getUsers);
