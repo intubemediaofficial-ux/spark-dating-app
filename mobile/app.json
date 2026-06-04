@@ -41,15 +41,7 @@
     },
     "plugins": [
       "expo-location",
-      "expo-image-picker",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#FF4458",
-          "sounds": ["./assets/notification-sound.wav"]
-        }
-      ]
+      "expo-image-picker"
     ],
     "extra": {
       "eas": {
