@@ -1,4 +1,6 @@
 const prisma = require('../config/database');
+const { botReplyToMessage } = require('../services/botService');
+const { notifyNewMessage } = require('../services/notificationService');
 
 // Get messages for a match
 const getMessages = async (req, res) => {
@@ -87,6 +89,14 @@ const sendMessage = async (req, res) => {
         },
       },
     });
+
+    // Trigger bot auto-reply if match involves a bot
+    botReplyToMessage(matchId, userId).catch(() => {});
+
+    // Send push notification to the other user
+    const receiverId = match.user1Id === userId ? match.user2Id : match.user1Id;
+    const senderName = req.user.name || 'Someone';
+    notifyNewMessage(receiverId, senderName, content).catch(() => {});
 
     res.status(201).json({ message });
   } catch (error) {

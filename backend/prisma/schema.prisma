@@ -25,6 +25,8 @@ model User {
   isActive      Boolean   @default(true)
   isBanned      Boolean   @default(false)
   isAdmin       Boolean   @default(false)
+  isBot         Boolean   @default(false)
+  fcmToken      String?
   profileApproved Boolean @default(false)
   minAgePreference Int    @default(18)
   maxAgePreference Int    @default(50)
@@ -44,6 +46,7 @@ model User {
   reportsReceived Report[]  @relation("ReportsReceived")
   blockedUsers    Block[]   @relation("BlockedBy")
   blockedByUsers  Block[]   @relation("BlockedUser")
+  subscriptions   Subscription[]
 
   @@index([latitude, longitude])
   @@index([gender])
@@ -121,6 +124,42 @@ model Block {
   blocked   User      @relation("BlockedUser", fields: [blockedId], references: [id])
 
   @@unique([blockerId, blockedId])
+}
+
+model Subscription {
+  id                String    @id @default(uuid())
+  userId            String
+  plan              SubscriptionPlan
+  razorpayOrderId   String?   @unique
+  razorpayPaymentId String?   @unique
+  razorpaySignature String?
+  amount            Int       // in paise (19900 = ₹199)
+  currency          String    @default("INR")
+  status            PaymentStatus @default(PENDING)
+  startDate         DateTime?
+  endDate           DateTime?
+  autoRenew         Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+}
+
+enum SubscriptionPlan {
+  GOLD
+  PLATINUM
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  EXPIRED
 }
 
 enum Gender {

@@ -1,5 +1,7 @@
 const prisma = require('../config/database');
 const { calculateDistance } = require('../utils/helpers');
+const { botAutoReplyOnMatch } = require('../services/botService');
+const { notifyNewMatch } = require('../services/notificationService');
 
 // Get discovery feed (profiles to swipe on)
 const getDiscoveryFeed = async (req, res) => {
@@ -131,6 +133,15 @@ const swipe = async (req, res) => {
         match = await prisma.match.create({
           data: { user1Id, user2Id },
         });
+
+        // Trigger bot auto-reply if match involves a bot
+        botAutoReplyOnMatch(match.id).catch(() => {});
+
+        // Send push notifications to both users
+        const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+        const targetUser = await prisma.user.findUnique({ where: { id: targetUserId }, select: { name: true } });
+        notifyNewMatch(targetUserId, currentUser?.name || 'Someone').catch(() => {});
+        notifyNewMatch(userId, targetUser?.name || 'Someone').catch(() => {});
       }
     }
 

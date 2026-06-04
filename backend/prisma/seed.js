@@ -125,7 +125,7 @@ const sampleUsers = [
     longitude: 77.2090,
     city: 'New Delhi',
     phone: '+919999999999',
-    email: 'admin@sparkdating.com',
+    email: 'admin@matchkar.com',
     isActive: true,
     isAdmin: true,
     profileApproved: true,

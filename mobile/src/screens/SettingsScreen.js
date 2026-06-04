@@ -269,7 +269,7 @@ export default function SettingsScreen({ navigation }) {
             <View style={styles.boostFeatureItem}><Text style={styles.boostFeatureIcon}>👀</Text><Text style={styles.boostFeatureText}>Your profile appears first</Text></View>
             <View style={styles.boostFeatureItem}><Text style={styles.boostFeatureIcon}>⏰</Text><Text style={styles.boostFeatureText}>30 minutes of priority visibility</Text></View>
           </View>
-          <Text style={styles.boostNote}>1 free Boost/month. Extra Boosts with Spark Gold.</Text>
+          <Text style={styles.boostNote}>1 free Boost/month. Extra Boosts with MatchKar Gold.</Text>
         </View>
 
         {/* Account */}
@@ -332,8 +332,8 @@ export default function SettingsScreen({ navigation }) {
           <TouchableOpacity style={styles.settingItem}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Safety Center</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
           <TouchableOpacity style={styles.settingItem}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Report a Problem</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
           <TouchableOpacity style={styles.settingItem}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Help & FAQ</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Terms of Service</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Privacy Policy</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('TermsOfService')}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Terms of Service</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('PrivacyPolicy')}><View style={styles.settingLeft}><Text style={styles.settingLabel}>Privacy Policy</Text></View><Text style={styles.chevron}>›</Text></TouchableOpacity>
         </View>
 
         {/* Danger Zone */}
@@ -347,7 +347,7 @@ export default function SettingsScreen({ navigation }) {
           >
             <Text style={styles.deleteText}>Delete Account</Text>
           </TouchableOpacity>
-          <Text style={styles.version}>Spark v1.0.0</Text>
+          <Text style={styles.version}>MatchKar v1.0.0</Text>
         </View>
       </ScrollView>
 

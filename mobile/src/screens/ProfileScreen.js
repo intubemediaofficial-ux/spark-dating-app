@@ -187,7 +187,7 @@ export default function ProfileScreen({ navigation }) {
           <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
-          <Text style={styles.version}>Spark v1.0.0</Text>
+          <Text style={styles.version}>MatchKar v1.0.0</Text>
         </View>
 
         <View style={{ height: 30 }} />

@@ -16,6 +16,8 @@ import ChatListScreen from '../screens/ChatListScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -90,6 +92,8 @@ export default function AppNavigator() {
             <Stack.Screen name="ChatConversation" component={ChatScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
           </>
         )}
       </Stack.Navigator>

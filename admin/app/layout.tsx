@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Spark Dating - Admin Panel",
-  description: "Admin dashboard for Spark Dating App",
+  title: "MatchKar - Admin Panel",
+  description: "Admin dashboard for MatchKar Dating App",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
           {/* Sidebar */}
           <aside className="w-64 bg-white border-r border-gray-200 fixed h-full">
             <div className="p-6">
-              <h1 className="text-2xl font-bold text-red-500">🔥 Spark</h1>
+              <h1 className="text-2xl font-bold text-red-500">🔥 MatchKar</h1>
               <p className="text-sm text-gray-500 mt-1">Admin Panel</p>
             </div>
             <nav className="mt-4">
