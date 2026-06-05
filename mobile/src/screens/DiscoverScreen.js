@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,296 +8,556 @@ import {
   PanResponder,
   Dimensions,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
+  Modal,
+  StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { swipeAPI } from '../services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '../context/LanguageContext';
+import { useSettings } from '../context/SettingsContext';
 
-const { width, height } = Dimensions.get('window');
-const SWIPE_THRESHOLD = 120;
+const { width } = Dimensions.get('window');
+const SWIPE_THRESHOLD = 100;
+const DAILY_LIKE_LIMIT = 20;
+
+const DEMO_PROFILES = [
+  {
+    id: '1', name: 'Priya Sharma', age: 24,
+    bio: 'Coffee lover | Travel enthusiast | Dog person 🐕',
+    photos: [
+      'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Travel', 'Photography', 'Coffee', 'Dogs'],
+    city: 'New Delhi', distance: 3, isVerified: true,
+    job: 'Marketing Manager at Google',
+  },
+  {
+    id: '2', name: 'Ananya Gupta', age: 23,
+    bio: 'Graphic designer by day, dancer by night 💃',
+    photos: [
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Art', 'Dance', 'Design', 'Netflix'],
+    city: 'New Delhi', distance: 5, isVerified: true,
+    job: 'Senior Designer at Zomato',
+  },
+  {
+    id: '3', name: 'Sneha Patel', age: 25,
+    bio: 'Doctor in making 🩺 | Bollywood buff',
+    photos: [
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Medical', 'Cooking', 'Bollywood', 'Reading'],
+    city: 'Mumbai', distance: 12, isVerified: false,
+    job: 'Resident Doctor at AIIMS',
+  },
+  {
+    id: '4', name: 'Kavya Reddy', age: 22,
+    bio: 'MBA student | Poetry writer ✍️',
+    photos: [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Poetry', 'Business', 'Music', 'Chai'],
+    city: 'Hyderabad', distance: 8, isVerified: true,
+    job: 'MBA Student at ISB',
+  },
+  {
+    id: '5', name: 'Meera Joshi', age: 26,
+    bio: 'Software engineer | Cat mom 🐱 | Trekker 🏔️',
+    photos: [
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Coding', 'Cats', 'Trekking', 'Photography'],
+    city: 'Bangalore', distance: 15, isVerified: true,
+    job: 'SDE at Microsoft',
+  },
+  {
+    id: '6', name: 'Riya Singh', age: 23,
+    bio: 'Fashion blogger | Foodie | Yoga lover 🧘‍♀️',
+    photos: [
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Fashion', 'Food', 'Yoga', 'Travel'],
+    city: 'Jaipur', distance: 35, isVerified: true,
+    job: 'Fashion Blogger',
+  },
+  {
+    id: '7', name: 'Pooja Verma', age: 24,
+    bio: 'Teacher by heart | Music is life 🎵',
+    photos: [
+      'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Teaching', 'Music', 'Reading', 'Cooking'],
+    city: 'Lucknow', distance: 55, isVerified: false,
+    job: 'School Teacher',
+  },
+  {
+    id: '8', name: 'Nisha Kapoor', age: 27,
+    bio: 'CA aspirant | Gym freak 💪 | Adventure junkie',
+    photos: [
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b3e5?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Finance', 'Gym', 'Adventure', 'Movies'],
+    city: 'Chandigarh', distance: 80, isVerified: true,
+    job: 'CA Intern at Deloitte',
+  },
+  {
+    id: '9', name: 'Aditi Sharma', age: 21,
+    bio: 'College student | Photography is my escape 📸',
+    photos: [
+      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Photography', 'College', 'Shopping', 'Dance'],
+    city: 'Pune', distance: 45, isVerified: true,
+    job: 'BBA Student at Symbiosis',
+  },
+  {
+    id: '10', name: 'Simran Kaur', age: 25,
+    bio: 'Nurse | Punjabi kudi | Love dogs 🐶',
+    photos: [
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1502767089025-6572583495f9?w=800&h=1200&fit=crop',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1200&fit=crop',
+    ],
+    interests: ['Healthcare', 'Dogs', 'Cooking', 'Bhangra'],
+    city: 'Amritsar', distance: 95, isVerified: true,
+    job: 'Nurse at Fortis Hospital',
+  },
+];
+
+const DEMO_USER_PHOTO = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+const DISTANCE_OPTIONS = [5, 10, 25, 50, 100, 200];
 
 export default function DiscoverScreen() {
-  const [profiles, setProfiles] = useState([]);
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { maxDistance, setMaxDistance, location } = useSettings();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const position = useRef(new Animated.ValueXY()).current;
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchedProfile, setMatchedProfile] = useState(null);
+  const [showDistanceFilter, setShowDistanceFilter] = useState(false);
+  const [likesUsed, setLikesUsed] = useState(0);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  const filteredProfiles = useMemo(() => {
+    return DEMO_PROFILES
+      .filter(p => p.distance <= maxDistance)
+      .sort((a, b) => a.distance - b.distance);
+  }, [maxDistance]);
 
   useEffect(() => {
-    loadProfiles();
-  }, []);
+    setCurrentIndex(0);
+    setCurrentPhotoIndex(0);
+  }, [maxDistance]);
+  const position = useRef(new Animated.ValueXY()).current;
+  const likeScale = useRef(new Animated.Value(0)).current;
+  const matchScale = useRef(new Animated.Value(0)).current;
+  const leftProfileX = useRef(new Animated.Value(-width)).current;
+  const rightProfileX = useRef(new Animated.Value(width)).current;
+  const heartScale = useRef(new Animated.Value(0)).current;
+  const sparkOpacity = useRef(new Animated.Value(0)).current;
 
-  const loadProfiles = async () => {
-    try {
-      setLoading(true);
-      const response = await swipeAPI.getDiscovery();
-      setProfiles(response.data.profiles);
-    } catch (error) {
-      console.error('Load profiles error:', error);
-    } finally {
-      setLoading(false);
-    }
+  const triggerLikeAnimation = (callback) => {
+    setShowLikeAnimation(true);
+    likeScale.setValue(0);
+    Animated.sequence([
+      Animated.spring(likeScale, { toValue: 1.3, friction: 3, useNativeDriver: true }),
+      Animated.spring(likeScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+      Animated.timing(likeScale, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => {
+      setShowLikeAnimation(false);
+      if (callback) callback();
+    });
   };
 
-  const handleSwipe = async (direction) => {
-    if (currentIndex >= profiles.length) return;
+  const triggerMatchAnimation = (profile) => {
+    setMatchedProfile(profile);
+    setShowMatchModal(true);
+    leftProfileX.setValue(-width);
+    rightProfileX.setValue(width);
+    heartScale.setValue(0);
+    sparkOpacity.setValue(0);
+    matchScale.setValue(0);
 
-    const profile = profiles[currentIndex];
-    try {
-      const response = await swipeAPI.swipe(profile.id, direction);
-      if (response.data.isMatch) {
-        Alert.alert('🎉 It\'s a Match!', `You and ${profile.name} liked each other!`);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(leftProfileX, { toValue: -60, friction: 5, useNativeDriver: true }),
+        Animated.spring(rightProfileX, { toValue: 60, friction: 5, useNativeDriver: true }),
+        Animated.spring(matchScale, { toValue: 1, friction: 4, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.spring(leftProfileX, { toValue: -30, friction: 8, useNativeDriver: true }),
+        Animated.spring(rightProfileX, { toValue: 30, friction: 8, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.spring(heartScale, { toValue: 1, friction: 3, tension: 100, useNativeDriver: true }),
+        Animated.timing(sparkOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]),
+    ]).start();
+  };
+
+  const handleSwipe = (direction) => {
+    if (currentIndex >= filteredProfiles.length) return;
+    const profile = filteredProfiles[currentIndex];
+
+    if (direction === 'RIGHT') {
+      if (likesUsed >= DAILY_LIKE_LIMIT) {
+        setShowLimitModal(true);
+        return;
       }
-    } catch (error) {
-      console.error('Swipe error:', error);
+      setLikesUsed(likesUsed + 1);
+      triggerLikeAnimation(() => {
+        if (currentIndex === 0 || currentIndex === 3) {
+          setTimeout(() => triggerMatchAnimation(profile), 200);
+        }
+      });
     }
 
     setCurrentIndex(currentIndex + 1);
-
-    // Load more when running low
-    if (currentIndex >= profiles.length - 3) {
-      loadProfiles();
-    }
+    setCurrentPhotoIndex(0);
   };
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 10,
     onPanResponderMove: (_, gesture) => {
       position.setValue({ x: gesture.dx, y: gesture.dy });
     },
     onPanResponderRelease: (_, gesture) => {
       if (gesture.dx > SWIPE_THRESHOLD) {
-        // Swipe Right - Like
-        Animated.spring(position, {
-          toValue: { x: width + 100, y: gesture.dy },
-          useNativeDriver: false,
-        }).start(() => {
+        Animated.timing(position, { toValue: { x: width + 100, y: gesture.dy }, duration: 300, useNativeDriver: false }).start(() => {
           handleSwipe('RIGHT');
           position.setValue({ x: 0, y: 0 });
         });
       } else if (gesture.dx < -SWIPE_THRESHOLD) {
-        // Swipe Left - Skip
-        Animated.spring(position, {
-          toValue: { x: -width - 100, y: gesture.dy },
-          useNativeDriver: false,
-        }).start(() => {
+        Animated.timing(position, { toValue: { x: -width - 100, y: gesture.dy }, duration: 300, useNativeDriver: false }).start(() => {
           handleSwipe('LEFT');
           position.setValue({ x: 0, y: 0 });
         });
       } else {
-        // Return to center
-        Animated.spring(position, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: false,
-        }).start();
+        Animated.spring(position, { toValue: { x: 0, y: 0 }, friction: 5, useNativeDriver: false }).start();
       }
     },
   });
 
-  const rotate = position.x.interpolate({
-    inputRange: [-width / 2, 0, width / 2],
-    outputRange: ['-10deg', '0deg', '10deg'],
-    extrapolate: 'clamp',
-  });
+  const rotate = position.x.interpolate({ inputRange: [-width / 2, 0, width / 2], outputRange: ['-8deg', '0deg', '8deg'], extrapolate: 'clamp' });
+  const likeOpacity = position.x.interpolate({ inputRange: [0, width / 5], outputRange: [0, 1], extrapolate: 'clamp' });
+  const nopeOpacity = position.x.interpolate({ inputRange: [-width / 5, 0], outputRange: [1, 0], extrapolate: 'clamp' });
+  const nextCardScale = position.x.interpolate({ inputRange: [-width / 2, 0, width / 2], outputRange: [1, 0.95, 1], extrapolate: 'clamp' });
 
-  const likeOpacity = position.x.interpolate({
-    inputRange: [0, width / 4],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const nopeOpacity = position.x.interpolate({
-    inputRange: [-width / 4, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const handlePhotoTap = (profile, side) => {
+    const total = profile.photos.length;
+    if (side === 'right' && currentPhotoIndex < total - 1) setCurrentPhotoIndex(currentPhotoIndex + 1);
+    else if (side === 'left' && currentPhotoIndex > 0) setCurrentPhotoIndex(currentPhotoIndex - 1);
+  };
 
   const renderCard = (profile, index) => {
     if (index < currentIndex) return null;
-
     const isCurrentCard = index === currentIndex;
     const cardStyle = isCurrentCard
-      ? [
-          styles.card,
-          {
-            transform: [
-              { translateX: position.x },
-              { translateY: position.y },
-              { rotate },
-            ],
-          },
-        ]
-      : [styles.card, { top: 10 * (index - currentIndex), transform: [{ scale: 1 - 0.05 * (index - currentIndex) }] }];
+      ? [styles.card, { transform: [{ translateX: position.x }, { translateY: position.y }, { rotate }] }]
+      : [styles.card, { top: 5, transform: [{ scale: nextCardScale }], opacity: 0.9 }];
+    const photoToShow = isCurrentCard ? currentPhotoIndex : 0;
 
     return (
-      <Animated.View
-        key={profile.id}
-        style={cardStyle}
-        {...(isCurrentCard ? panResponder.panHandlers : {})}
-      >
-        <Image
-          source={{ uri: profile.photos?.[0] || 'https://via.placeholder.com/400x600' }}
-          style={styles.cardImage}
-        />
+      <Animated.View key={profile.id} style={cardStyle} {...(isCurrentCard ? panResponder.panHandlers : {})}>
+        <Image source={{ uri: profile.photos[photoToShow] }} style={styles.cardImage} resizeMode="cover" />
 
-        {/* Like/Nope Labels */}
+        {/* Tap zones for photo browsing */}
+        {isCurrentCard && (
+          <View style={styles.tapZones}>
+            <TouchableOpacity style={styles.tapLeft} onPress={() => handlePhotoTap(profile, 'left')} activeOpacity={1} />
+            <TouchableOpacity style={styles.tapRight} onPress={() => handlePhotoTap(profile, 'right')} activeOpacity={1} />
+          </View>
+        )}
+
+        {/* Photo indicators */}
+        {isCurrentCard && (
+          <View style={styles.photoIndicators}>
+            {profile.photos.map((_, i) => (
+              <View key={i} style={[styles.indicator, i === currentPhotoIndex && styles.activeIndicator]} />
+            ))}
+          </View>
+        )}
+
+        {/* LIKE / NOPE stamps */}
         {isCurrentCard && (
           <>
-            <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]}>
-              <Text style={styles.likeLabelText}>LIKE</Text>
+            <Animated.View style={[styles.stamp, styles.likeStamp, { opacity: likeOpacity }]}>
+              <Text style={styles.likeStampText}>LIKE</Text>
             </Animated.View>
-            <Animated.View style={[styles.nopeLabel, { opacity: nopeOpacity }]}>
-              <Text style={styles.nopeLabelText}>NOPE</Text>
+            <Animated.View style={[styles.stamp, styles.nopeStamp, { opacity: nopeOpacity }]}>
+              <Text style={styles.nopeStampText}>NOPE</Text>
             </Animated.View>
           </>
         )}
 
-        {/* Profile Info */}
-        <View style={styles.cardInfo}>
+        {/* Gradient */}
+        <View style={styles.gradient} />
+
+        {/* User info at bottom */}
+        <View style={styles.profileInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.cardName}>{profile.name}, {profile.age}</Text>
-            {profile.isVerified && <Text style={styles.verified}>✓</Text>}
+            <Text style={styles.name}>{profile.name}</Text>
+            <Text style={styles.age}>{profile.age}</Text>
+            {profile.isVerified && <View style={styles.verifiedBadge}><Text style={styles.verifiedIcon}>✓</Text></View>}
           </View>
-          {profile.city && <Text style={styles.cardCity}>📍 {profile.city}</Text>}
-          {profile.distance && <Text style={styles.cardDistance}>{profile.distance} km away</Text>}
-          {profile.bio && <Text style={styles.cardBio} numberOfLines={2}>{profile.bio}</Text>}
-          {profile.interests?.length > 0 && (
-            <View style={styles.interestRow}>
-              {profile.interests.slice(0, 4).map((interest, i) => (
-                <View key={i} style={styles.interestTag}>
-                  <Text style={styles.interestTagText}>{interest}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          <View style={styles.infoRow}>
+            <Text style={styles.infoText}>📍 {profile.city} • {profile.distance} km away</Text>
+          </View>
+          {profile.job && <Text style={styles.jobText}>💼 {profile.job}</Text>}
         </View>
       </Animated.View>
     );
   };
 
-  if (loading && profiles.length === 0) {
+  if (currentIndex >= filteredProfiles.length) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#FF4458" style={styles.loader} />
-      </SafeAreaView>
-    );
-  }
-
-  if (currentIndex >= profiles.length && !loading) {
-    return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyTitle}>No more profiles</Text>
-          <Text style={styles.emptyText}>Check back later for new people near you</Text>
-          <TouchableOpacity style={styles.refreshBtn} onPress={loadProfiles}>
-            <Text style={styles.refreshBtnText}>Refresh</Text>
+          <Text style={styles.emptyTitle}>{t('noMoreProfiles')}</Text>
+          <Text style={styles.emptyText}>{filteredProfiles.length === 0 ? `No profiles within ${maxDistance} km. Try increasing distance.` : t('checkBackLater')}</Text>
+          {filteredProfiles.length === 0 && maxDistance < 200 && (
+            <TouchableOpacity style={styles.refreshBtn} onPress={() => { setMaxDistance(Math.min(maxDistance * 2, 200)); }}>
+              <Text style={styles.refreshBtnText}>Increase to {Math.min(maxDistance * 2, 200)} km</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[styles.refreshBtn, { marginTop: 10, backgroundColor: '#555' }]} onPress={() => { setCurrentIndex(0); setCurrentPhotoIndex(0); }}>
+            <Text style={styles.refreshBtnText}>{t('refresh')}</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🔥 Spark</Text>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Top overlay - Logo + Distance filter */}
+      <View style={[styles.topOverlay, { top: insets.top + 10 }]}>
+        <Text style={styles.logo}>🔥 MatchKar</Text>
+        <TouchableOpacity style={styles.distanceBtn} onPress={() => setShowDistanceFilter(!showDistanceFilter)}>
+          <Text style={styles.distanceBtnText}>📍 {maxDistance} km</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Distance filter dropdown */}
+      {showDistanceFilter && (
+        <View style={[styles.distanceDropdown, { top: insets.top + 50 }]}>
+          {DISTANCE_OPTIONS.map((d) => (
+            <TouchableOpacity key={d} style={[styles.distanceOption, maxDistance === d && styles.distanceOptionActive]} onPress={() => { setMaxDistance(d); setShowDistanceFilter(false); }}>
+              <Text style={[styles.distanceOptionText, maxDistance === d && styles.distanceOptionTextActive]}>{d} km</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Card Stack */}
       <View style={styles.cardStack}>
-        {profiles.slice(currentIndex, currentIndex + 3).reverse().map((profile, i) =>
-          renderCard(profile, currentIndex + (2 - i))
+        {filteredProfiles.slice(currentIndex, currentIndex + 2).reverse().map((profile, i) =>
+          renderCard(profile, currentIndex + (1 - i))
         )}
       </View>
 
-      {/* Action Buttons */}
+      {/* Bottom Action Buttons - Skip & Like */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.skipBtn]}
-          onPress={() => {
-            Animated.spring(position, {
-              toValue: { x: -width - 100, y: 0 },
-              useNativeDriver: false,
-            }).start(() => {
-              handleSwipe('LEFT');
-              position.setValue({ x: 0, y: 0 });
-            });
-          }}
-        >
-          <Text style={styles.actionBtnText}>✕</Text>
+        <TouchableOpacity style={[styles.actionBtn, styles.skipBtn]} onPress={() => {
+          Animated.timing(position, { toValue: { x: -width - 100, y: 0 }, duration: 300, useNativeDriver: false }).start(() => { handleSwipe('LEFT'); position.setValue({ x: 0, y: 0 }); });
+        }}>
+          <Text style={styles.skipIcon}>✕</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.likeBtn]}
-          onPress={() => {
-            Animated.spring(position, {
-              toValue: { x: width + 100, y: 0 },
-              useNativeDriver: false,
-            }).start(() => {
-              handleSwipe('RIGHT');
-              position.setValue({ x: 0, y: 0 });
-            });
-          }}
-        >
-          <Text style={styles.actionBtnText}>♥</Text>
+        <TouchableOpacity style={[styles.actionBtn, styles.superBtn]} onPress={() => {
+          triggerLikeAnimation();
+          setCurrentIndex(currentIndex + 1);
+          setCurrentPhotoIndex(0);
+        }}>
+          <Text style={styles.superIcon}>⭐</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.actionBtn, styles.likeBtn]} onPress={() => {
+          Animated.timing(position, { toValue: { x: width + 100, y: 0 }, duration: 300, useNativeDriver: false }).start(() => { handleSwipe('RIGHT'); position.setValue({ x: 0, y: 0 }); });
+        }}>
+          <Text style={styles.likeIcon}>♥</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+
+      {/* Like Animation Overlay */}
+      {showLikeAnimation && (
+        <View style={styles.likeOverlay} pointerEvents="none">
+          <Animated.View style={{ transform: [{ scale: likeScale }] }}>
+            <Text style={styles.bigHeart}>❤️</Text>
+          </Animated.View>
+        </View>
+      )}
+
+      {/* Match Modal */}
+      <Modal visible={showMatchModal} transparent animationType="fade">
+        <View style={styles.matchOverlay}>
+          <Animated.View style={[styles.matchContent, { transform: [{ scale: matchScale }] }]}>
+            <Animated.View style={[styles.sparkContainer, { opacity: sparkOpacity }]}>
+              <Text style={styles.sparkText}>⚡</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', top: -20, left: -30 }]}>✨</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', top: -15, right: -25 }]}>✨</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', bottom: -10, left: -20 }]}>💫</Text>
+              <Text style={[styles.sparkText, { position: 'absolute', bottom: -15, right: -30 }]}>💫</Text>
+            </Animated.View>
+
+            <Text style={styles.matchTitle}>It's a Match! 🎉</Text>
+            <Text style={styles.matchSubtitle}>You and {matchedProfile?.name} liked each other</Text>
+
+            <View style={styles.matchProfiles}>
+              <Animated.View style={[styles.matchProfileItem, { transform: [{ translateX: leftProfileX }] }]}>
+                <Image source={{ uri: DEMO_USER_PHOTO }} style={styles.matchProfileImage} />
+                <Text style={styles.matchProfileName}>You</Text>
+              </Animated.View>
+              <Animated.View style={[styles.matchHeart, { transform: [{ scale: heartScale }] }]}>
+                <Text style={styles.matchHeartIcon}>❤️</Text>
+              </Animated.View>
+              <Animated.View style={[styles.matchProfileItem, { transform: [{ translateX: rightProfileX }] }]}>
+                <Image source={{ uri: matchedProfile?.photos?.[0] }} style={styles.matchProfileImage} />
+                <Text style={styles.matchProfileName}>{matchedProfile?.name}</Text>
+              </Animated.View>
+            </View>
+
+            <TouchableOpacity style={styles.matchChatBtn} onPress={() => setShowMatchModal(false)}>
+              <Text style={styles.matchChatBtnText}>{t('sendMessage')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.matchKeepBtn} onPress={() => setShowMatchModal(false)}>
+              <Text style={styles.matchKeepBtnText}>{t('keepSwiping')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* Like Limit Modal */}
+      <Modal visible={showLimitModal} transparent animationType="slide">
+        <View style={styles.limitOverlay}>
+          <View style={styles.limitContent}>
+            <Text style={styles.limitEmoji}>💔</Text>
+            <Text style={styles.limitTitle}>{t('dailyLimitReached')}</Text>
+            <Text style={styles.limitText}>{t('usedAllLikes', { count: DAILY_LIKE_LIMIT })}</Text>
+            <Text style={styles.limitUpgrade}>{t('upgradeTo')} <Text style={{ color: '#FFB300', fontWeight: '800' }}>MatchKar Gold</Text> {t('forUnlimited')}</Text>
+            <TouchableOpacity style={styles.limitUpgradeBtn} onPress={() => setShowLimitModal(false)}>
+              <Text style={styles.limitUpgradeBtnText}>{t('upgradeNow')} - ₹199/mo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.limitWaitBtn} onPress={() => setShowLimitModal(false)}>
+              <Text style={styles.limitWaitBtnText}>{t('waitTomorrow')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  loader: { flex: 1, justifyContent: 'center' },
-  header: { paddingHorizontal: 20, paddingVertical: 10, alignItems: 'center' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#FF4458' },
+  container: { flex: 1, backgroundColor: '#000' },
+  topOverlay: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 },
+  logo: { fontSize: 26, fontWeight: '800', color: '#fff', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  distanceBtn: { backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  distanceBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  distanceDropdown: { position: 'absolute', right: 20, backgroundColor: '#fff', borderRadius: 12, padding: 8, zIndex: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 10 },
+  distanceOption: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  distanceOptionActive: { backgroundColor: '#FFF0F1' },
+  distanceOptionText: { fontSize: 16, color: '#333' },
+  distanceOptionTextActive: { color: '#FF4458', fontWeight: '700' },
   cardStack: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: {
-    position: 'absolute',
-    width: width - 40,
-    height: height * 0.62,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  cardImage: { width: '100%', height: '65%', backgroundColor: '#e0e0e0' },
-  cardInfo: { padding: 15, flex: 1 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardName: { fontSize: 22, fontWeight: 'bold', color: '#222' },
-  verified: { fontSize: 16, color: '#4CAF50', fontWeight: 'bold' },
-  cardCity: { fontSize: 14, color: '#666', marginTop: 3 },
-  cardDistance: { fontSize: 12, color: '#999', marginTop: 2 },
-  cardBio: { fontSize: 14, color: '#444', marginTop: 6 },
-  interestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  interestTag: { backgroundColor: '#FFF0F1', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  interestTagText: { fontSize: 12, color: '#FF4458' },
-  likeLabel: {
-    position: 'absolute', top: 40, left: 20, borderWidth: 3,
-    borderColor: '#4CAF50', borderRadius: 5, padding: 8, transform: [{ rotate: '-15deg' }],
-  },
-  likeLabelText: { fontSize: 28, fontWeight: 'bold', color: '#4CAF50' },
-  nopeLabel: {
-    position: 'absolute', top: 40, right: 20, borderWidth: 3,
-    borderColor: '#FF4458', borderRadius: 5, padding: 8, transform: [{ rotate: '15deg' }],
-  },
-  nopeLabelText: { fontSize: 28, fontWeight: 'bold', color: '#FF4458' },
-  actions: { flexDirection: 'row', justifyContent: 'center', gap: 30, paddingVertical: 20 },
-  actionBtn: { width: 64, height: 64, borderRadius: 32, justifyContent: 'center', alignItems: 'center', elevation: 3 },
-  skipBtn: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#FF4458' },
-  likeBtn: { backgroundColor: '#FF4458' },
-  actionBtnText: { fontSize: 28 },
+  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#222', overflow: 'hidden' },
+  cardImage: { width: '100%', height: '100%', position: 'absolute' },
+  tapZones: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', zIndex: 10 },
+  tapLeft: { flex: 1 },
+  tapRight: { flex: 1 },
+  photoIndicators: { position: 'absolute', top: 100, left: 15, right: 15, flexDirection: 'row', gap: 4, zIndex: 20 },
+  indicator: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.4)' },
+  activeIndicator: { backgroundColor: '#fff' },
+  stamp: { position: 'absolute', top: 140, zIndex: 30, borderWidth: 4, borderRadius: 8, padding: 10 },
+  likeStamp: { left: 30, borderColor: '#4CAF50', transform: [{ rotate: '-15deg' }] },
+  likeStampText: { fontSize: 40, fontWeight: '900', color: '#4CAF50' },
+  nopeStamp: { right: 30, borderColor: '#FF4458', transform: [{ rotate: '15deg' }] },
+  nopeStampText: { fontSize: 40, fontWeight: '900', color: '#FF4458' },
+  gradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%', backgroundColor: 'rgba(0,0,0,0.55)' },
+  profileInfo: { position: 'absolute', bottom: 20, left: 20, right: 20, zIndex: 5 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  name: { fontSize: 30, fontWeight: '800', color: '#fff' },
+  age: { fontSize: 28, fontWeight: '400', color: '#fff' },
+  verifiedBadge: { backgroundColor: '#4FC3F7', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  verifiedIcon: { fontSize: 14, color: '#fff', fontWeight: 'bold' },
+  infoRow: { marginTop: 6 },
+  infoText: { fontSize: 16, color: 'rgba(255,255,255,0.9)' },
+  jobText: { fontSize: 15, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 25, paddingVertical: 15, paddingBottom: 10, backgroundColor: '#000' },
+  actionBtn: { justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 6 },
+  skipBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#fff', borderWidth: 2, borderColor: '#FF4458' },
+  skipIcon: { fontSize: 30, color: '#FF4458' },
+  superBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff', borderWidth: 2, borderColor: '#29B6F6' },
+  superIcon: { fontSize: 24 },
+  likeBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#FF4458' },
+  likeIcon: { fontSize: 32, color: '#fff' },
+  likeOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 999 },
+  bigHeart: { fontSize: 140 },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyEmoji: { fontSize: 60 },
-  emptyTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginTop: 15 },
-  emptyText: { fontSize: 15, color: '#666', marginTop: 8, textAlign: 'center' },
-  refreshBtn: { backgroundColor: '#FF4458', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 25, marginTop: 20 },
-  refreshBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  emptyEmoji: { fontSize: 70 },
+  emptyTitle: { fontSize: 26, fontWeight: '800', color: '#fff', marginTop: 20 },
+  emptyText: { fontSize: 16, color: '#999', marginTop: 10 },
+  refreshBtn: { backgroundColor: '#FF4458', paddingHorizontal: 35, paddingVertical: 14, borderRadius: 30, marginTop: 25 },
+  refreshBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  matchOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
+  matchContent: { alignItems: 'center', padding: 30, width: '90%' },
+  sparkContainer: { position: 'absolute', top: '35%', zIndex: 10 },
+  sparkText: { fontSize: 40 },
+  matchTitle: { fontSize: 34, fontWeight: '900', color: '#fff', marginBottom: 8 },
+  matchSubtitle: { fontSize: 17, color: 'rgba(255,255,255,0.8)', marginBottom: 40 },
+  matchProfiles: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 50, width: '100%' },
+  matchProfileItem: { alignItems: 'center' },
+  matchProfileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#FF4458', backgroundColor: '#333' },
+  matchProfileName: { fontSize: 16, color: '#fff', fontWeight: '600', marginTop: 10 },
+  matchHeart: { position: 'absolute', zIndex: 10 },
+  matchHeartIcon: { fontSize: 50 },
+  matchChatBtn: { backgroundColor: '#FF4458', paddingHorizontal: 50, paddingVertical: 16, borderRadius: 30, marginBottom: 15, width: '100%', alignItems: 'center' },
+  matchChatBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  matchKeepBtn: { paddingVertical: 12 },
+  matchKeepBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
+  limitOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+  limitContent: { backgroundColor: '#fff', borderRadius: 24, padding: 35, width: '85%', alignItems: 'center' },
+  limitEmoji: { fontSize: 60, marginBottom: 15 },
+  limitTitle: { fontSize: 24, fontWeight: '800', color: '#222', marginBottom: 10, textAlign: 'center' },
+  limitText: { fontSize: 16, color: '#666', marginBottom: 15, textAlign: 'center' },
+  limitUpgrade: { fontSize: 15, color: '#444', marginBottom: 25, textAlign: 'center' },
+  limitUpgradeBtn: { backgroundColor: '#FFB300', paddingVertical: 16, paddingHorizontal: 40, borderRadius: 30, marginBottom: 12, width: '100%', alignItems: 'center' },
+  limitUpgradeBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  limitWaitBtn: { paddingVertical: 12 },
+  limitWaitBtnText: { color: '#888', fontSize: 15 },
 });
