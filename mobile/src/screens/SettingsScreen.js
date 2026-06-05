@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useSettings } from '../context/SettingsContext';
 
 const LOOKING_FOR_OPTIONS = ['Women', 'Men', 'Everyone'];
 const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Punjabi', 'Haryanvi'];
@@ -20,14 +21,14 @@ const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Pun
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();
   const { language: appLanguage, setLanguage: setAppLanguage, t } = useLanguage();
-
-  // Discovery
-  const [lookingFor, setLookingFor] = useState('Women');
-  const [minAge, setMinAge] = useState(18);
-  const [maxAge, setMaxAge] = useState(35);
-  const [maxDistance, setMaxDistance] = useState(50);
-  const [location, setLocation] = useState(user.city || 'New Delhi');
-  const [globalMode, setGlobalMode] = useState(false);
+  const {
+    maxDistance, setMaxDistance,
+    location, setLocation,
+    lookingFor, setLookingFor,
+    minAge, setMinAge,
+    maxAge, setMaxAge,
+    globalMode, setGlobalMode,
+  } = useSettings();
 
   // Privacy
   const [showOnline, setShowOnline] = useState(true);

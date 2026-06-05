@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,12 @@ import {
   Modal,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
+import { useSettings } from '../context/SettingsContext';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 100;
-const CARD_HEIGHT = height - 160;
 const DAILY_LIKE_LIMIT = 20;
 
 const DEMO_PROFILES = [
@@ -152,27 +153,31 @@ const DEMO_PROFILES = [
 ];
 
 const DEMO_USER_PHOTO = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
-const DISTANCE_OPTIONS = [10, 20, 50, 100];
+const DISTANCE_OPTIONS = [5, 10, 25, 50, 100, 200];
 
 export default function DiscoverScreen() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { maxDistance, setMaxDistance, location } = useSettings();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState(null);
   const [showDistanceFilter, setShowDistanceFilter] = useState(false);
-  const [selectedDistance, setSelectedDistance] = useState(50);
   const [likesUsed, setLikesUsed] = useState(0);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const filteredProfiles = useMemo(() => {
-    // Always show all profiles sorted by distance (nearest first)
-    // Seamless flow: user scrolls through nearest profiles first,
-    // then automatically sees farther profiles without any interruption
-    // No empty states, no user counts - just a continuous feed
-    return [...DEMO_PROFILES].sort((a, b) => a.distance - b.distance);
-  }, [selectedDistance]);
+    return DEMO_PROFILES
+      .filter(p => p.distance <= maxDistance)
+      .sort((a, b) => a.distance - b.distance);
+  }, [maxDistance]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setCurrentPhotoIndex(0);
+  }, [maxDistance]);
   const position = useRef(new Animated.ValueXY()).current;
   const likeScale = useRef(new Animated.Value(0)).current;
   const matchScale = useRef(new Animated.Value(0)).current;
@@ -342,8 +347,13 @@ export default function DiscoverScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
           <Text style={styles.emptyTitle}>{t('noMoreProfiles')}</Text>
-          <Text style={styles.emptyText}>{t('checkBackLater')}</Text>
-          <TouchableOpacity style={styles.refreshBtn} onPress={() => { setCurrentIndex(0); setCurrentPhotoIndex(0); }}>
+          <Text style={styles.emptyText}>{filteredProfiles.length === 0 ? `No profiles within ${maxDistance} km. Try increasing distance.` : t('checkBackLater')}</Text>
+          {filteredProfiles.length === 0 && maxDistance < 200 && (
+            <TouchableOpacity style={styles.refreshBtn} onPress={() => { setMaxDistance(Math.min(maxDistance * 2, 200)); }}>
+              <Text style={styles.refreshBtnText}>Increase to {Math.min(maxDistance * 2, 200)} km</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[styles.refreshBtn, { marginTop: 10, backgroundColor: '#555' }]} onPress={() => { setCurrentIndex(0); setCurrentPhotoIndex(0); }}>
             <Text style={styles.refreshBtnText}>{t('refresh')}</Text>
           </TouchableOpacity>
         </View>
@@ -356,19 +366,19 @@ export default function DiscoverScreen() {
       <StatusBar barStyle="light-content" />
 
       {/* Top overlay - Logo + Distance filter */}
-      <View style={styles.topOverlay}>
+      <View style={[styles.topOverlay, { top: insets.top + 10 }]}>
         <Text style={styles.logo}>🔥 MatchKar</Text>
         <TouchableOpacity style={styles.distanceBtn} onPress={() => setShowDistanceFilter(!showDistanceFilter)}>
-          <Text style={styles.distanceBtnText}>📍 {selectedDistance} km</Text>
+          <Text style={styles.distanceBtnText}>📍 {maxDistance} km</Text>
         </TouchableOpacity>
       </View>
 
       {/* Distance filter dropdown */}
       {showDistanceFilter && (
-        <View style={styles.distanceDropdown}>
+        <View style={[styles.distanceDropdown, { top: insets.top + 50 }]}>
           {DISTANCE_OPTIONS.map((d) => (
-            <TouchableOpacity key={d} style={[styles.distanceOption, selectedDistance === d && styles.distanceOptionActive]} onPress={() => { setSelectedDistance(d); setShowDistanceFilter(false); }}>
-              <Text style={[styles.distanceOptionText, selectedDistance === d && styles.distanceOptionTextActive]}>{d} km</Text>
+            <TouchableOpacity key={d} style={[styles.distanceOption, maxDistance === d && styles.distanceOptionActive]} onPress={() => { setMaxDistance(d); setShowDistanceFilter(false); }}>
+              <Text style={[styles.distanceOptionText, maxDistance === d && styles.distanceOptionTextActive]}>{d} km</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -475,17 +485,17 @@ export default function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  topOverlay: { position: 'absolute', top: 50, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 },
+  topOverlay: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 },
   logo: { fontSize: 26, fontWeight: '800', color: '#fff', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   distanceBtn: { backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
   distanceBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  distanceDropdown: { position: 'absolute', top: 90, right: 20, backgroundColor: '#fff', borderRadius: 12, padding: 8, zIndex: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 10 },
+  distanceDropdown: { position: 'absolute', right: 20, backgroundColor: '#fff', borderRadius: 12, padding: 8, zIndex: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 10 },
   distanceOption: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
   distanceOptionActive: { backgroundColor: '#FFF0F1' },
   distanceOptionText: { fontSize: 16, color: '#333' },
   distanceOptionTextActive: { color: '#FF4458', fontWeight: '700' },
   cardStack: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { position: 'absolute', width: width, height: CARD_HEIGHT, backgroundColor: '#222', overflow: 'hidden' },
+  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#222', overflow: 'hidden' },
   cardImage: { width: '100%', height: '100%', position: 'absolute' },
   tapZones: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', zIndex: 10 },
   tapLeft: { flex: 1 },
@@ -498,7 +508,7 @@ const styles = StyleSheet.create({
   likeStampText: { fontSize: 40, fontWeight: '900', color: '#4CAF50' },
   nopeStamp: { right: 30, borderColor: '#FF4458', transform: [{ rotate: '15deg' }] },
   nopeStampText: { fontSize: 40, fontWeight: '900', color: '#FF4458' },
-  gradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', backgroundColor: 'transparent', backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.85))' },
+  gradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%', backgroundColor: 'rgba(0,0,0,0.55)' },
   profileInfo: { position: 'absolute', bottom: 20, left: 20, right: 20, zIndex: 5 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   name: { fontSize: 30, fontWeight: '800', color: '#fff' },
