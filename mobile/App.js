@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/context/AuthContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { SettingsProvider } from './src/context/SettingsContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -11,10 +12,12 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <LanguageProvider>
-          <AuthProvider>
-            <StatusBar style="dark" />
-            <AppNavigator />
-          </AuthProvider>
+          <SettingsProvider>
+            <AuthProvider>
+              <StatusBar style="dark" />
+              <AppNavigator />
+            </AuthProvider>
+          </SettingsProvider>
         </LanguageProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

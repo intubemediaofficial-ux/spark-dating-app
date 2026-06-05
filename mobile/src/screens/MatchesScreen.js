@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   onlineDot: { position: 'absolute', top: 12, right: 12, width: 14, height: 14, borderRadius: 7, backgroundColor: '#4CAF50', borderWidth: 2, borderColor: '#fff' },
   newBadge: { position: 'absolute', top: 12, left: 12, backgroundColor: '#FF4458', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   newBadgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  matchOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12, backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.7))' },
+  matchOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12, backgroundColor: 'rgba(0,0,0,0.5)' },
   matchName: { fontSize: 17, fontWeight: '700', color: '#fff' },
   matchCity: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
